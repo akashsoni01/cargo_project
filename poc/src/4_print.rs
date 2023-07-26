@@ -1,5 +1,4 @@
-
-fn main() {
+fn print_test() {
     println!("Hello, world!");
     println!("My name is {} and I'm {} years old", "Alex", 29);
     println!("a + b = {}", 3 + 9);
