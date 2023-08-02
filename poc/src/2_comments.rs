@@ -3,9 +3,13 @@ use std::io;
 fn comments(){
 // how to document functions ? 
 // Single line comments 
+
 /*Mulit line comments */
+
 /// doc comment will be automatically generated when we run command 
 /// cargo doc
+/// 
+/// 
 
     let mut input = String::new();
     println!("How to document code ? see below comment.");
