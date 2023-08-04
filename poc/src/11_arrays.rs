@@ -37,4 +37,5 @@ fn arrays_test() {
     for number in numbers.iter() { // arrey ka har element print krdo
         println!("{}", number);
     }
+
 }
