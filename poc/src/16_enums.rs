@@ -61,4 +61,9 @@ impl Person {
         String::from("This is a curry method")
     }
 
+    // other curry for variadic arguments
+    fn curry_fn_detail2(&self) -> String {
+        String::from("This is a curry method")
+    }
+
 }

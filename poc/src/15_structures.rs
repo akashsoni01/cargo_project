@@ -74,4 +74,14 @@ impl Employee {
     fn static_fn_detail() -> String {
         String::from("Details of a person") // return String 
     }
+
+    // curry is a method that takes a reference to a Employee and returns a reference to a function
+    fn curry(&self) -> &dyn Fn(u32) -> Employee {
+        &|age| Employee {name: self.name.clone(), company: self.company.clone(), age}
+    }
+
+    // other curry for variadic arguments
+    fn curry2(&self) -> &dyn Fn(u32, String) -> Employee {
+        &|age, company| Employee {name: self.name.clone(), company, age}
+    }
 }
