@@ -42,3 +42,17 @@ fn main() {
 
     println!("Main thread");
 }
+
+/*
+new thread 0
+new thread 1
+new thread 2
+new thread 3
+new thread 4
+new thread 5
+new thread 6
+new thread 7
+new thread 8
+new thread 9
+Main thread
+*/
