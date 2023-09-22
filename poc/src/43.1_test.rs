@@ -9,7 +9,3 @@ fn operators_test() {
     // assert_eq!(a, 13); 
 
 }
-
-fn main() {
-    println!("hello world");
-}
