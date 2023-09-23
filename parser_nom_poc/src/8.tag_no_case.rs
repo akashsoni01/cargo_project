@@ -55,15 +55,18 @@ fn test_parser() {
 
 
 /*
-  fn parse_tag(input: &[u8], tag_to_parse: &[u8]) -> IResult<&[u8], &[u8]> {
-    tag(tag_to_parse)(input)
-}
+use nom::{
+    IResult,
+    sequence::tuple,
+    character::complete::char,
+    multi::fold_many0,
+};
 
 fn main() {
-    let input = b"Hello, World!";
-    let tag_to_parse = b"Hello";
+    let input = "Hello, World!";
+    let tag_to_parse = "hello";
 
-    match parse_tag(input, tag_to_parse) {
+    match parse_tag_no_case(input, tag_to_parse) {
         Ok((rest, result)) => {
             println!("Successfully parsed: {:?}", result);
             println!("Remaining input: {:?}", rest);
@@ -74,16 +77,37 @@ fn main() {
     }
 }
 
+fn parse_tag_no_case(input: &str, tag_to_parse: &str) -> IResult<&str, &str> {
+    let tag_len = tag_to_parse.len();
+    let mut parser = tuple((
+        fold_many0(char(tag_to_parse.chars().next().unwrap()), 0, |count, c| count + 1),
+        fold_many0(char(tag_to_parse.chars().next().unwrap().to_ascii_uppercase()), 0, |count, c| count + 1),
+        char(tag_to_parse.chars().next().unwrap()),
+        char(tag_to_parse.chars().next().unwrap().to_ascii_uppercase()),
+        tag(&tag_to_parse[1..])
+    ));
 
-In this example, tag(b"Hello")
-parses the byte slice "Hello" from the input b"Hello, World!", 
-and the remaining input is b", World!".
-You can use tag to search for and parse specific byte sequences in binary data.
+    let (input, (_, _, first_char, first_char_upper, rest)) = parser(input)?;
+
+    if first_char == first_char_upper {
+        Ok((input, &input[..tag_len]))
+    } else {
+        Err(nom::Err::Error((input, nom::error::ErrorKind::Tag)))
+    }
+}
 
 
+In this example:
+
+We define a parse_tag_no_case function that takes an input string and a tag to parse case-insensitively.
+The function constructs a parser by defining a tuple of parsers that consider both lowercase and uppercase variants of the first character of the tag.
+We use fold_many0 to allow multiple occurrences of the same character, ensuring it's case-insensitive.
+If the first character of the parsed tag (after case folding) matches the first character of the tag to parse, we return a successful result. Otherwise, we return a parsing error.
+With this custom parse_tag_no_case function, you can parse tags without being sensitive to case differences.
 
 
 */
+
 
 
 
