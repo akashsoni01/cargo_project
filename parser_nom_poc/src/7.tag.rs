@@ -10,6 +10,7 @@ fn parser(s: &str) -> IResult<&str, &str> {
   }
   
   /// |input=Hello, World! testing|Recognize=Hello|Parsed=Hello|Remaining=, World! testing|
+  /// |input=world hello|Recognize=Hello|Failed to parse|
   /// |input=Something|Failed to parse|
   /// |input=|Failed to parse|
   /// |input=|Recognize=Hello|Failed to parse|
