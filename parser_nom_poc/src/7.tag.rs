@@ -6,7 +6,7 @@ use nom::{
 };
 
 fn parser(s: &str) -> IResult<&str, &str> {
-    tag("नमस्ते")(s)
+    tag("Hello")(s)
   }
   
   /// |input=Hello, World! testing|Recognize=Hello|Parsed=Hello|Remaining=, World! testing|
@@ -15,8 +15,8 @@ fn parser(s: &str) -> IResult<&str, &str> {
   /// |input=|Recognize=Hello|Failed to parse|
 
   fn main() {
-    let input = "नमस्ते संसार |";
-    let recognize_string:&str = "नमस्ते"; // 
+    let input = "";
+    let recognize_string:&str = "Hello"; // 
     let recognize_char: char = ' ';
     match parser(input) { 
         Ok((remaining, parsed)) => {

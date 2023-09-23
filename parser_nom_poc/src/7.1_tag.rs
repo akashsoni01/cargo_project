@@ -9,7 +9,7 @@ fn parser(s: &str) -> IResult<&str, &str> {
     tag("नमस्ते")(s)
   }
   
-  /// |input=Hello, World! testing|Recognize=Hello|Parsed=Hello|Remaining=, World! testing|
+  /// |input=नमस्ते संसार ||Recognize=नमस्ते|Parsed=नमस्ते|Remaining= संसार ||
   /// |input=Something|Failed to parse|
   /// |input=|Failed to parse|
   /// |input=|Recognize=Hello|Failed to parse|
