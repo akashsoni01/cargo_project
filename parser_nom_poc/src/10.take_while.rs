@@ -3,14 +3,19 @@ use nom::{
     error::{Error, ErrorKind},
     Err,
     bytes::complete::take_while,
+    // bytes::complete::take_while1,
+    // bytes::complete::take_while_m_n,
     character::is_alphabetic, 
     character::is_digit
 };
 
+/// take_while Returns the longest list of bytes for which the provided function returns true. 
+/// take_while1 does the same, but must return at least one character, 
+/// while take_while_m_n must return between m and n
 fn alpha(s: &[u8]) -> IResult<&[u8], &[u8]> {
     take_while(is_alphabetic)(s)
   }
-
+/// outputs - alpha
   /// |input=[49, 50, 51, 97, 98, 99, 52, 53, 54, 100, 101, 102]|Recognize=is_alphabetic|Parsed=[]|Remaining=[49, 50, 51, 97, 98, 99, 52, 53, 54, 100, 101, 102]|
   /// |input=[49, 97]|Recognize=is_alphabetic|Parsed=[]|Remaining=[49, 97]|
   /// |input=[49, 46, 97]|Recognize=is_alphabetic|Parsed=[]|Remaining=[49, 46, 97]|
@@ -19,18 +24,44 @@ fn alpha(s: &[u8]) -> IResult<&[u8], &[u8]> {
   /// |input=[108, 97, 116, 105, 110]|Recognize=is_alphabetic|Parsed=[108, 97, 116, 105, 110]|Remaining=[]|
   /// 
 
-  fn parse_lowercase_letters(input: &[u8]) -> IResult<&[u8], &[u8]> {
+fn parse_lowercase_letters(input: &[u8]) -> IResult<&[u8], &[u8]> {
     take_while(|c: u8| c.is_ascii_lowercase())(input)
 }
+/// outputs - parse_lowercase_letters
 /// |input=[97, 65]|Recognize=is_ascii_lowercase|Parsed=[97]|Remaining=[65]|
 /// |input=[104, 101, 108, 108, 111, 87, 111, 114, 108, 100, 49, 50, 51]|Recognize=is_ascii_lowercase|Parsed=[104, 101, 108, 108, 111]|Remaining=[87, 111, 114, 108, 100, 49, 50, 51]|
 /// 
 
+fn parse_uppercase_word(input: &[u8]) -> IResult<&[u8], &[u8]> {
+    take_while1(|c| c.is_ascii_uppercase())(input)
+}
+/// outputs - parse_uppercase_word
+/// 
+
+
+/*
+take_while_m_n: This combinator allows you to specify 
+a minimum (m) and maximum (n) number of bytes to take that satisfy the predicate. 
+Here's an example of using take_while_m_n to parse a sequence of exactly 3 lowercase letters:
+*/
+fn parse_lowercase_triplet(input: &[u8]) -> IResult<&[u8], &[u8]> {
+    take_while_m_n(3, 3, |c| c.is_ascii_lowercase())(input)
+}
+/// outputs - parse_lowercase_triplet
+/// In this example, parse_lowercase_triplet uses take_while_m_n 
+/// to parse exactly 3 consecutive lowercase letters. 
+/// The parsed lowercase triplet is "abc",
+///  and the remaining input is "XYZ".
+
+
+
+
+
   fn main() {
     let input = b"helloWorld123";
-    let recognize_string:&str = "is_ascii_lowercase"; // 
+    let recognize_string:&str = "HELLO World"; // 
     let recognize_char: char = ' ';
-    match parse_lowercase_letters(input) { 
+    match parse_uppercase_word(input) { 
         Ok((remaining, parsed)) => {
             println!();
             if !recognize_char.is_whitespace() {
