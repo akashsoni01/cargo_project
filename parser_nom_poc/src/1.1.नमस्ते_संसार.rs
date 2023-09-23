@@ -11,12 +11,12 @@ use nom::{
 /// tag :- hello_world_parser is a parser function that uses
 /// the tag combinator to match the string "Hello, World!" exactly.
 fn hello_world_parser(input: &str) -> IResult<&str, &str> {
-    tag("Hello, World!")(input)
+    tag("नमस्ते संसार |")(input)
 }
 
 /// नमस्ते संसार 
 fn main() {
-    let input = "Hello, World! testing"; // Input string
+    let input = "नमस्ते संसार | testing"; // Input string
 
     match hello_world_parser(input) {
         Ok((remaining, parsed)) => {

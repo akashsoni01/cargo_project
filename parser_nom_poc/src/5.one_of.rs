@@ -17,9 +17,11 @@ fn parse_vowel(input: &str) -> IResult<&str, char> {
  /// |input=sky|Failed to parse||
  /// |input=akash akash|Recognize=aeiou|Parsed=a|Remaining=kash akash|
  /// |input=aeiou|Recognize=aeiou|Parsed=a|Remaining=eiou|
+ /// |input=hi sky|Failed to parse||
+ /// |input=hi|Failed to parse||
 
   fn main() {
-    let input = "aeiou";
+    let input = "hi";
     let recognize_string:&str = "aeiou";
     match parse_vowel(input) { 
         Ok((remaining, parsed)) => {
