@@ -1,8 +1,11 @@
 #[allow(unused_variables)]
 #[allow(unused_assignments)]
 
+/// higher order functions 
+/// 
 fn main() {
     // let square = |a: i32| a * a;
+    let sum = |a:i32| { a + a};
     let square = |a: i32| a * a;
     apply(square, 6);
 
