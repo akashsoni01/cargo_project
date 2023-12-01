@@ -49,19 +49,26 @@ fn test_struct() {
 struct Employee {
     name: String,
     company: String,
-    age: u32
+    age: u32, 
+    id: Option<u32>
 }
 
 // impl block is used to add methods to a struct
 // in below code we are adding 2 methods to Employee struct
 impl Employee {
     
-    // new is an associated function that takes 3 parameters and returns an Employee
-    fn new(name: String, company: String, age: u32) -> Employee {
+    // new is an associated function that takes 4 parameters and returns an Employee
+    fn new(name: String, company: String, age: u32, id: Option<u32>) -> Employee {
         Employee {
             name,
             company,
-            age
+            age,
+            // unwrap optional id
+            // id: id.unwrap_or(0), // if id is None then assign 0 else unwrap the id
+            // id: id.map_or(0, |x| x), // if id is None then assign 0 else unwrap the id
+            // id: id.map(|id| id).unwrap_or(0), // if id is None then assign 0 else unwrap the id 
+            // id: id.map(|id| id).unwrap_or_else(|| 0), // * if id is None then assign 0 else unwrap the id using closure
+            id: id.map(|id| id.into()) // if id is non then set none else convert id to u32
         }
     }
 
