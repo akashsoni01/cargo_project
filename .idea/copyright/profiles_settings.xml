@@ -1,0 +1,10 @@
+<component name="CopyrightManager">
+  <settings default="copyrights">
+    <module2copyright>
+      <element module="All" copyright="copyrights" />
+      <element module="Non-Project Files" copyright="copyrights" />
+      <element module="Open Files" copyright="copyrights" />
+      <element module="Scratches and Consoles" copyright="copyrights" />
+    </module2copyright>
+  </settings>
+</component>

@@ -1,7 +1,7 @@
 # cargo_project
  
 
- Sure, I'd be happy to help you set up the debugger for a Rust POC (Proof of Concept) project using Visual Studio Code and LLDB. Here's a step-by-step guide to get you started:
+Set up the debugger for a Rust POC (Proof of Concept) project using Visual Studio Code and LLDB. Here's a step-by-step guide to get you started:
 
 1. Install Required Software:
    - Make sure you have Visual Studio Code (VS Code) installed on your system. You can download it from the official website: https://code.visualstudio.com/
@@ -33,7 +33,3 @@
    - Click on the "Run and Debug" icon in the Activity Bar on the side panel of VS Code (or use the `F5` key) to start debugging your Rust project.
    - The debugger will launch LLDB, load your Rust executable, and stop at the breakpoints you set.
    - You can use various debugging features like stepping through code, inspecting variables, and more.
-
-Remember, for debugging to work smoothly, you should build your Rust project with debugging symbols. You can do this by running `cargo build` or `cargo build --debug` before starting the debugging session.
-
-With these steps, you should have the debugger set up for your Rust POC project in Visual Studio Code using LLDB. Happy debugging!  
