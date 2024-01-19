@@ -1,0 +1,13 @@
+[package]
+name = "poc_polars"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+polars = { version = "0.36.2", features = ["lazy", "ndarray"] }
+chrono = "0.4.31"
+ndarray = "0.14"
+ndarray-linalg = "0.16.0"
+plotly = "0.8.4"
