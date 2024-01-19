@@ -13,3 +13,4 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 jupiter/docs/data/electronics.csv
+jupyter/electronics.csv
