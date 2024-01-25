@@ -28,4 +28,12 @@ fn string_test() {
     // if any string repeats then it automatically replaces all the occurrences
     
     println!("{}", new_dog); // Max is my dog
+
+    // multi line string example 
+
+    let multi_line = "This is a \
+    multi line string"
+    ;
+
+    println!("{}", multi_line);
 }
