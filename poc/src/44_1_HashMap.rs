@@ -1,6 +1,7 @@
+// create a custom CustomHashMap using type T and V without using std 
 use std::collections::HashMap;
 
-fn main() {
+fn testHashMap() {
     let mut hashmap= HashMap::new();
     hashmap.insert("a","string");
     hashmap.insert("b","string");
@@ -24,6 +25,5 @@ fn main() {
     for (key, value) in hashmap2.iter() {
         println!("{}: {}", key, value);
     }
-
 
 }
