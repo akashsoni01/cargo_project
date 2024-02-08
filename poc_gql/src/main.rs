@@ -51,10 +51,27 @@ impl Query {
     fn user(context: &Database, id: i32) -> FieldResult<&User> {
         context.get_user(id)
     }
-    fn users(context: &Database) -> Vec<&User> {
-        context.users.values().collect()
+    fn users(context: &Database) -> FieldResult<Vec<&User>> {
+        context.users
     }
+    // using sqlx fetch user by id 
+    // fn user_by_id(context: &Database, id: i32) -> FieldResult<User> {
+    //     let user = sqlx::query_as!(User, "SELECT id, name FROM users WHERE id = $1", id)
+    //         .fetch_one(&context.pool)
+    //         .await?;
+    //     Ok(user)
+    // }
+
+    //  // using sqlx fetch users
+    // fn users(context: &Database) -> FieldResult<Vec<User>> {
+    //     let users = sqlx::query_as!(User, "SELECT id, name FROM users")
+    //         .fetch_all(&context.pool)
+    //         .await?;
+    //     Ok(users)
+    // }
+    
 }
+
 
 type Schema = RootNode<'static, Query, EmptyMutation<Database>, EmptySubscription<Database>>;
 
