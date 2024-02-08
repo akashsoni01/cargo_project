@@ -24,6 +24,7 @@ pub struct User {
 pub struct Database {
     users: HashMap<i32, User>,
 }
+impl juniper::Context for Database {}
 
 impl Database {
     pub fn new() -> Self {
@@ -36,14 +37,22 @@ impl Database {
     pub fn get_user(&self, id: i32) -> FieldResult<&User> {
         self.users.get(&id).ok_or(FieldError::new("User not found", graphql_value!({ "not_found": id })))
     }
+    
 }
 
 struct Query;
 
 #[graphql_object(context = Database)]
 impl Query {
+    fn apiVersion() -> &'static str {
+        "1.0"
+    }
+
     fn user(context: &Database, id: i32) -> FieldResult<&User> {
         context.get_user(id)
+    }
+    fn users(context: &Database) -> Vec<&User> {
+        context.users.values().collect()
     }
 }
 
