@@ -1,10 +1,5 @@
 use actix_web:: {
-    middleware,
-    web::{self},
-    App,
-    HttpServer,
-    HttpResponse, 
-    Responder
+    Error, middleware, web::{self, Data, Payload}, App, HttpRequest, HttpResponse, HttpServer, Responder, Result
 };
 
 use std::collections::HashMap;
@@ -14,7 +9,6 @@ use juniper::{
 };
 
 use juniper_actix:: {
-    graphiql_handler, 
     graphql_handler, 
     playground_handler
 };
@@ -53,6 +47,31 @@ impl Query {
     }
 }
 
+type Schema = RootNode<'static, Query, EmptyMutation<Database>, EmptySubscription<Database>>;
+
+fn schema() -> Schema {
+    Schema::new(Query, EmptyMutation::new(), EmptySubscription::new())
+}
+
+async fn playground_route() -> Result<HttpResponse, Error> {
+    playground_handler("/graphql", None).await
+    // other examples 
+    // playground_handler("/graphql", Some("/subscriptions")).await;
+}
+
+async fn graphiql_route(
+    req: HttpRequest,
+    payload: Payload,
+    schema: Data<Schema>,
+) -> Result<HttpResponse, Error> {
+    let context = Database::new();
+    graphql_handler(&schema, &context, req, payload).await
+}
+
+// async fn handle_graphql_request(data: web::Data<Database>, req: web::Json<GraphQLRequest>) -> impl Responder {
+//     let res = req.execute(&schema(), data);
+//     HttpResponse::Ok().json(res)
+// }
 
 async fn handle_incoming_request() -> impl Responder {
     HttpResponse::Ok().body("Hello, world!")
@@ -65,9 +84,15 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     let server = HttpServer::new(|| {
         App::new()
+        .app_data(Data::new(schema())) // <- create app with shared state
             .wrap(middleware::Logger::default())
             .service(
                 web::resource("/").route(web::get().to(handle_incoming_request))
+            )
+            .service(
+                web::resource("/graphql")
+                .route(web::get().to(playground_route))
+                .route(web::post().to(graphiql_route)),
             )
     });
 
@@ -75,50 +100,3 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: {}", url);
     server.bind(url).unwrap().run().await
 }
-
-
-/*
-async fn handle_incoming_request_with_params(info: web::Path<(String, u32)>) -> impl Responder {
-    HttpResponse::Ok().body(format!("Hello, {}! Your age is {}", info.0, info.1))
-}
-
-async fn handle_incoming_request_with_query_params(info: web::Query<(String, u32)>) -> impl Responder {
-    HttpResponse::Ok().body(format!("Hello, {}! Your age is {}", info.0, info.1))
-}
-
-async fn handle_incoming_request_with_json(info: web::Json<serde_json::Value>) -> impl Responder {
-    HttpResponse::Ok().json(info.0)
-}
-
-async fn handle_incoming_request_with_form(info: web::Form<serde_json::Value>) -> impl Responder {
-    HttpResponse::Ok().json(info.0)
-}
-
-async fn handle_incoming_request_with_headers(info: web::Header<serde_json::Value>) -> impl Responder {
-    HttpResponse::Ok().json(info.0)
-}
-
-async fn handle_incoming_request_with_body(info: web::Bytes) -> impl Responder {
-    HttpResponse::Ok().body(info)
-}
-
-async fn handle_incoming_request_with_streaming_body(info: web::Payload) -> impl Responder {
-    HttpResponse::Ok().streaming(info)
-}
-
-async fn handle_incoming_request_with_multipart(info: actix_multipart::Multipart) -> impl Responder {
-    HttpResponse::Ok().body("Multipart")
-}
-
-async fn handle_incoming_request_with_cookies(info: web::Cookie) -> impl Responder {
-    HttpResponse::Ok().body("Cookies")
-}
-
-async fn handle_incoming_request_with_cookies_and_state(info: web::Cookie, state: web::Data<serde_json::Value>) -> impl Responder {
-    HttpResponse::Ok().json(state.0)
-}
-
-async fn handle_incoming_request_with_cookies_and_state_and_params(info: web::Cookie, state: web::Data<serde_json::Value>, info2: web::Path<(String, u32)>) -> impl Responder {
-    HttpResponse::Ok().json(state.0)
-}
-*/
