@@ -1,13 +1,13 @@
 use actix_web:: {
     Error, middleware, web::{self, Data, Payload}, App, HttpRequest, HttpResponse, HttpServer, Responder, Result
 };
-
+use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use juniper::{
     graphql_object, graphql_value, http::{playground::playground_source, GraphQLRequest}, EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLObject, RootNode
 
 };
-
+use uuid::Uuid;
 use juniper_actix:: {
     graphql_handler, 
     playground_handler
@@ -17,7 +17,10 @@ use juniper_actix:: {
 #[derive(Clone, GraphQLObject)]
 pub struct User {
     id: i32,
+    u: Uuid,
     name: String,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Default)]
@@ -29,8 +32,8 @@ impl juniper::Context for Database {}
 impl Database {
     pub fn new() -> Self {
         let mut users = HashMap::new();
-        users.insert(1, User { id: 1, name: "John".to_string() });
-        users.insert(2, User { id: 2, name: "Jane".to_string() });
+        users.insert(1, User { id: 1, u: Uuid::new_v4(), name: "John".to_string(), created_at: Some(Utc::now()), updated_at: Some(Utc::now()) });
+        users.insert(2, User { id: 2, u: Uuid::new_v4(), name: "Jane".to_string(), created_at: Some(Utc::now()), updated_at: Some(Utc::now()) });
         Database { users }
     }
 
@@ -44,15 +47,15 @@ struct Query;
 
 #[graphql_object(context = Database)]
 impl Query {
-    fn apiVersion() -> &'static str {
+    fn api_ersion() -> &'static str {
         "1.0"
     }
 
     fn user(context: &Database, id: i32) -> FieldResult<&User> {
         context.get_user(id)
     }
-    fn users(context: &Database) -> FieldResult<Vec<&User>> {
-        context.users
+    fn users(context: &Database) -> Vec<&User> {
+        context.users.values().collect()
     }
     // using sqlx fetch user by id 
     // fn user_by_id(context: &Database, id: i32) -> FieldResult<User> {
@@ -122,7 +125,7 @@ async fn main() -> std::io::Result<()> {
             )
     });
 
-    let url = "127.0.0.1:8080";
+    let url: &str = "127.0.0.1:8080";
     println!("Starting server at: {}", url);
     server.bind(url).unwrap().run().await
 }

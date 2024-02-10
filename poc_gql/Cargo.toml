@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 actix-web = "4.4.0"
 env_logger = "0.11.1"
-juniper = "0.15.11"
-juniper_actix = "0.4.0"
+# juniper from latest master branch 
+juniper = { git = "https://github.com/graphql-rust/juniper", features = ["uuid", "chrono"] }
+juniper_actix = { git = "https://github.com/graphql-rust/juniper" }
+uuid = {version = "1.7.0", features = ["v4", "serde"]}
+chrono = {version = "0.4.26", default-features = false, features = ["clock", "serde"]}
