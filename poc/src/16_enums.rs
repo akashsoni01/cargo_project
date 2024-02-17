@@ -67,3 +67,78 @@ impl Person {
     }
 
 }
+
+
+// create a enum language with 3 variants, and associated value as string
+
+#[derive(Debug)]
+enum Language {
+    Rust(String),
+    Python(String),
+    Java(String)
+}
+
+// create a method for Language enum
+impl Language {
+    fn get_language(&self) -> String {
+        match self {
+            Language::Rust(lang) => lang.to_string(),
+            Language::Python(lang) => lang.to_string(),
+            Language::Java(lang) => lang.to_string()
+        }
+    }
+}
+
+// create a enum with 3 variants, and raw value as string 
+#[derive(Debug)]
+enum Language2 {
+    Rust = "Rust".len() as isize,
+    Python = "Python".len() as isize,
+    Java = "Java".len() as isize
+}
+
+// create a method for Language2 enum
+impl Language2 {
+    fn get_language(&self) -> String {
+        match self {
+            Language2::Rust => String::from("Rust"),
+            Language2::Python => String::from("Python"),
+            Language2::Java => String::from("Java")
+        }
+    }
+}
+
+
+// create a enum with 3 variants, and raw value as integer
+#[derive(Debug)]
+enum Language3 {
+    Rust = 1,
+    Python = 2,
+    Java = 3
+}
+
+
+// Language4
+#[derive(Debug)]
+enum Language4 {
+    Rust,
+    Python,
+    Java
+}
+
+impl ToString for Language4 {
+    fn to_string(&self) -> String {
+        match self {
+            Language4::Rust => String::from("Rust 1.48"),
+            Language4::Python => String::from("Python 3.8"),
+            Language4::Java => String::from("Java 11")
+        }
+    }
+}
+
+// use language4 enum
+fn test_language4() {
+    let lang = Language4::Rust;
+    println!("{}", lang.to_string());
+}
+
