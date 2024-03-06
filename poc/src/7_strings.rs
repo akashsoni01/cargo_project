@@ -37,3 +37,52 @@ fn string_test() {
 
     println!("{}", multi_line);
 }
+
+
+// function that take a string and return a string
+fn take_and_give_back(a_string: String) -> String {
+    a_string
+}
+
+// function that take a string and return a string and length
+fn calculate_length(s: String) -> (String, usize) {
+    let length = s.len(); // len() returns the length of a String
+    (s, length)
+}
+
+// function takes a string slice and returns a string slice and length
+fn calculate_length_ref(s: &String) -> (&String, usize) {
+    let length = s.len();
+    (s, length)
+}
+
+// below function takes a string slice and returns a string slice. 
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes(); // as_bytes() returns a byte slice
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i]; // returns a string slice
+        }
+    }
+    &s[..]
+}
+
+
+// multi line string 
+fn multi_line_string() {
+    let multi_line = "This is a \
+    multi line string"
+    ;
+
+    println!("{}", multi_line);
+}
+
+// multi line string with new line r#""#
+
+fn multi_line_string_with_new_line() {
+    let multi_line = r#"This is a 
+    multi line string"#
+    ;
+
+    println!("{}", multi_line);
+}
