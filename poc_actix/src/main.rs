@@ -12,11 +12,12 @@ struct Info {
 
 /*
 request 
-http://localhost:8080/test_lang2?lang=hi-in
+http://localhost:8080/test_lang2?lang=hi-in&query={}
 
 response 
 language = hi-in!
 */
+
 #[get("/test_lang2")]
 async fn test_lang2(info: web::Query<Info>) -> String {
     format!("language = {}!", info.lang)

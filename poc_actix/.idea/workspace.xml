@@ -13,7 +13,6 @@
       <change afterPath="$PROJECT_DIR$/.idea/poc_actix.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/._Cargo.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +101,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1709794168785</updated>
-      <workItem from="1709794169839" duration="1746000" />
+      <workItem from="1709794169839" duration="2069000" />
     </task>
     <servers />
   </component>
