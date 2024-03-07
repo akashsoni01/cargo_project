@@ -1,9 +1,11 @@
 use actix_web:: {
     Error, middleware, web::{self, Data, Payload}, App, HttpRequest, HttpResponse, HttpServer, Responder, Result
 };
+
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use juniper::{
+    GraphQLEnum, GraphQLInputObject,
     graphql_object, graphql_value, http::{playground::playground_source, GraphQLRequest}, EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLObject, RootNode
 
 };
@@ -22,7 +24,10 @@ pub struct User {
     created_at: Option<DateTime<Utc>>,
     updated_at: Option<DateTime<Utc>>,
 }
-
+#[derive(Clone, GraphQLInputObject)]
+pub struct UserInput {
+    name: String
+}
 #[derive(Clone, Default)]
 pub struct Database {
     users: HashMap<i32, User>,
@@ -57,6 +62,42 @@ impl Query {
     fn users(context: &Database) -> Vec<&User> {
         context.users.values().collect()
     }
+
+ /*
+    # Write your query or mutation here
+{
+  users2(
+    param: {
+      name: "Akash soni"
+    }
+  ) {
+    name
+  }
+}
+*/
+
+ /*
+    {
+    "data": {
+        "users2": {
+        "name": "some other name"
+            }
+        }
+    }   
+*/
+    fn users2(context: &Database, param: UserInput) -> FieldResult<User> {
+        let mut mutable_user = param.clone();
+        mutable_user.name = "some other name".to_string(); // Convert string literal to String
+        let new_user = User {
+            id: 1, // Assuming this is how you assign an ID
+            u: Uuid::new_v4(), // Assuming this is how you generate UUID
+            name: mutable_user.name.clone(),
+            created_at: Some(Utc::now()),
+            updated_at: Some(Utc::now()),
+        };
+        Ok(new_user)
+        }
+
     // using sqlx fetch user by id 
     // fn user_by_id(context: &Database, id: i32) -> FieldResult<User> {
     //     let user = sqlx::query_as!(User, "SELECT id, name FROM users WHERE id = $1", id)
