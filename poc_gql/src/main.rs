@@ -6,14 +6,11 @@ use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use juniper::{
     GraphQLEnum, GraphQLInputObject,
-    graphql_object, graphql_value, http::{playground::playground_source, GraphQLRequest}, EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLObject, RootNode
+    graphql_object, graphql_value, EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLObject, RootNode
 
 };
 use uuid::Uuid;
-use juniper_actix:: {
-    graphql_handler, 
-    playground_handler
-};
+use juniper_actix:: { graphql_handler, playground_handler };
 
 
 #[derive(Clone, GraphQLObject)]
@@ -64,7 +61,7 @@ impl Query {
     }
 
  /*
-    # Write your query or mutation here
+# Write your query or mutation here
 {
   users2(
     param: {
@@ -86,8 +83,9 @@ impl Query {
     }   
 */
     fn users2(context: &Database, param: UserInput) -> FieldResult<User> {
-        let mut mutable_user = param.clone();
-        mutable_user.name = "some other name".to_string(); // Convert string literal to String
+        // let mut mutable_user = param.clone();
+        let mutable_user = param.clone();
+        // mutable_user.name = "some other name".to_string(); // Convert string literal to String
         let new_user = User {
             id: 1, // Assuming this is how you assign an ID
             u: Uuid::new_v4(), // Assuming this is how you generate UUID

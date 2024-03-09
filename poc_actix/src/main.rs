@@ -55,8 +55,6 @@ async fn get_language_from_url(req: HttpRequest) -> impl Responder {
         println!("Found lang parameter: {} = {}", key, value);
         return HttpResponse::Ok().body(value.to_string());
     }
-
-
     HttpResponse::BadRequest().body("Lang parameter not found")
 }
 
