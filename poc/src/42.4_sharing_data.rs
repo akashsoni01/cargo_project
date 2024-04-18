@@ -20,6 +20,7 @@ fn main() {
             // Lock the mutex to modify the shared data
             let mut num = counter.lock().unwrap(); // MutexGuard
             *num += 1; // Dereference the MutexGuard to modify the data
+            println!("Thread {}: Counter: {}", thread::current().name().unwrap(), *num);
         });
 
         handles.push(handle); // Store the JoinHandle of the thread
@@ -33,3 +34,11 @@ fn main() {
     // The counter will be modified by multiple threads safely
     println!("Final counter value: {}", *counter.lock().unwrap()); // MutexGuard
 }
+
+
+/*
+outupt 
+
+Final counter value: 5
+
+*/
