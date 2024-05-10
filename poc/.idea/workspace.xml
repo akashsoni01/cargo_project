@@ -7,10 +7,9 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3894fee0-044e-4f97-b4fb-d9b816ce9a9a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/35_refrence.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../poc_tokio/.idea/.gitignore" afterDir="false" />
+    <list default="true" id="3894fee0-044e-4f97-b4fb-d9b816ce9a9a" name="Changes" comment="refrence experiment">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/35_refrence.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/35_refrence.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -99,8 +98,17 @@
       <option name="presentableId" value="Default" />
       <updated>1706359813260</updated>
       <workItem from="1706359814317" duration="114000" />
-      <workItem from="1715333822859" duration="480000" />
+      <workItem from="1715333822859" duration="927000" />
     </task>
+    <task id="LOCAL-00001" summary="refrence experiment">
+      <option name="closed" value="true" />
+      <created>1715334341375</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1715334341375</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -108,5 +116,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="refrence experiment" />
+    <option name="LAST_COMMIT_MESSAGE" value="refrence experiment" />
   </component>
 </project>
