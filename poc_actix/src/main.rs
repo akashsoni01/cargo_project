@@ -65,7 +65,8 @@ async fn get_language_from_url(req: HttpRequest) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    println!("Your server is starting ....");
+    let result = HttpServer::new(|| {
         App::new()
             .service(hello)
             .service(echo)
@@ -75,6 +76,8 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(("127.0.0.1", 8080))?
     .run()
-    .await
+    .await;
+    println!("The server is started at 127.0.0.1:8080");
+    return result;
 }
 
