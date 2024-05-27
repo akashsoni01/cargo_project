@@ -1,3 +1,44 @@
+/*
+create docker image and run it from below two commands
+
+sudo docker build . -t rustbuild:1
+sudo docker run rustbuild:1
+
+
+run command to see the images
+sudo docker ps -a
+
+run command on terminal to create a tar image
+docker save rustbuild:1 > rustbuild.tar
+
+*/
+
+
+/*
+how to upload a image container to docker hub so that anyone can pull it and use it
+
+1. first create a docker hub account
+2. create a repo say poc_actix_docker
+3. login - on windows 10 wsl don't forget to use sudo to login otherwise it will not be able to save creds
+
+sudo docker login
+
+4. push by tagging the image buildname:versionname and then username/repo
+docker tag rustbuild:1 akashsoni8285/actix_poc_docker_repo
+5. push the image again on wsl use sudo
+docker push akashsoni8285/actix_poc_docker_repo
+
+
+6. to pull
+docker pull akashsoni8285/actix_poc_docker_repo:latest
+
+
+7. to remove it from local first list all images docker image
+docker rmi akashsoni8285/actix_poc_docker_repo
+
+9. to run it
+docker run
+*/
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use actix_web::{HttpRequest};
 
@@ -65,8 +106,10 @@ async fn get_language_from_url(req: HttpRequest) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("Your server is starting ....");
-    let result = HttpServer::new(|| {
+    println!("Your server is starting .... at 127.0.0.1:8080");
+    println!("try running command on terminal \n curl ")
+
+    HttpServer::new(|| {
         App::new()
             .service(hello)
             .service(echo)
@@ -76,8 +119,8 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(("127.0.0.1", 8080))?
     .run()
-    .await;
-    println!("The server is started at 127.0.0.1:8080");
-    return result;
+    .await
 }
+
+
 
