@@ -1,20 +1,11 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use actix_web::{HttpRequest};
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, middleware, HttpRequest};
+use actix_web::cookie::time::macros::date;
+use actix_web::web::service;
 use rustis::{
     client::Client,
-    commands::{FlushingMode, ServerCommands, StringCommands},
-    Result,
 };
+use rustis::commands::StringCommands;
 use rustis::resp::cmd;
-
-// use url::form_urlencoded;
-// use serde::Deserialize;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct Info {
-    lang: String,
-}
 
 /*
 request
@@ -24,21 +15,9 @@ response
 language = hi-in!
 */
 
-#[get("/test_lang2")]
-async fn test_lang2(info: web::Query<Info>) -> String {
-    format!("language = {}!", info.lang)
-}
 
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
 
 async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
@@ -69,18 +48,22 @@ hi-in
 //     req.
 // }
 
+
+#[derive(Clone)]
 pub struct RedisClient {
     client: Client
 }
 // connectino, power, change
 impl RedisClient {
     async fn build() -> Self {
-        let client = Client::connect("127.0.0.1:6379").await?;
+        let client = Client::connect("127.0.0.1:6379").await.unwrap();
         return Self {
             client
         }
     }
 }
+
+#[derive(Clone)]
 pub struct AppState {
     redis_client: RedisClient
 }
@@ -93,11 +76,10 @@ impl AppState {
     }
 }
 
-#[get("/test_redis_set_1")]
 async fn test_redis_set_1(
-    state: web::Data<AppState>,
+    data: web::Data<AppState>,
 ) -> impl Responder {
-    state.redis_client.client.send( cmd("MSET")
+    &data.redis_client.client.send(cmd("MSET")
                                         .arg("key1")
                                         .arg("value1")
                                         .arg("key2")
@@ -108,20 +90,49 @@ async fn test_redis_set_1(
                                         .arg("value4"),
                                     None,
     )
+        .await
+        .unwrap()
+        .to::<()>()
+        .unwrap();
+    return HttpResponse::Ok().body("saved!")
+
 }
 
+#[get("/")]
+async fn index(_req: HttpRequest) -> impl Responder {
+    "Welcome!"
+}
 
-#[cfg_attr(feature = "tokio-runtime", tokio::main)]
+#[get("/test_redis_set_2")]
+async fn test_redis_set_2(
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let client = &data.redis_client.client;
+    let values: Vec<String> = data.redis_client.client
+        .send(
+            cmd("MGET").arg("key1").arg("key2").arg("key3").arg("key4"),
+            None,
+        )
+        .await
+        .unwrap()
+        .to()
+        .unwrap();
+
+
+    return HttpResponse::Ok().body(values.join("-"))
+}
+
 #[actix_web::main]
+#[cfg_attr(feature = "tokio-runtime", tokio::main)]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+    let state = AppState::build().await.clone();
+    HttpServer::new(move || {
         App::new()
-            .app_data(AppState::build())
-            .service(hello)
-            .service(echo)
-            // .service(get_language_from_url)
-            .service(test_lang2)
-            .service(test_redis_set_1)
+            .app_data(web::Data::new(state.clone()))
+            .service(test_redis_set_2)
+            .route("/hey2", web::get().to(test_redis_set_1))
             .route("/hey", web::get().to(manual_hello))
     })
         .bind(("127.0.0.1", 8080))?

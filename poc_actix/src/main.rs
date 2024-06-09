@@ -105,6 +105,8 @@ async fn get_language_from_url(req: HttpRequest) -> impl Responder {
 // }
 
 #[actix_web::main]
+#[cfg_attr(feature = "tokio-runtime", tokio::main)]
+#[cfg_attr(feature = "async-std-runtime", async_std::main)]ƒ
 async fn main() -> std::io::Result<()> {
     println!("Your server is starting .... at 127.0.0.1:8080");
     println!("try running command on terminal \n curl ")
