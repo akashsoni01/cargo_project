@@ -38,6 +38,11 @@ fn main() {
 
 /*
 outupt 
+Thread 1: Counter: 1
+Thread 2: Counter: 2
+Thread 3: Counter: 3
+Thread 4: Counter: 4
+Thread 5: Counter: 5
 
 Final counter value: 5
 

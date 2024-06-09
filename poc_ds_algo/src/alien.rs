@@ -25,7 +25,7 @@ pub fn test() {
             // lock the mutex to access the shared data
             let mut data = counter2.lock().unwrap();
             *data += 1;
-            println!("thread 1 {}", *data);
+            println!("thread 2 {}", *data);
 
         }
     });

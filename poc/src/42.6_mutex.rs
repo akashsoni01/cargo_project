@@ -30,7 +30,6 @@ pub fn test() {
         }
     });
 
-
     // wait for both thread to finish
     thread1.join().unwrap();
     thread2.join().unwrap();
@@ -63,3 +62,21 @@ thread 2 9
 thread 2 10
 Final value of shared state = 10
 */ 
+
+
+/*
+or it can also print whatever thread finishes first.
+
+thread 2 1
+thread 2 2
+thread 2 3
+thread 2 4
+thread 2 5
+thread 1 6
+thread 1 7
+thread 1 8
+thread 1 9
+thread 1 10
+Final value of shared state = 10
+
+*/

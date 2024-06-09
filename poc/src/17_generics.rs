@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use crate::Colors::Red;
 
 #[allow(unused_variables)]
@@ -160,4 +161,10 @@ impl<T> Point<T> { // generic impl block
     // println!("{:?}", p2);
     // println!("{:?}", p3);
 
+}
+
+trait YourGenericTrait {
+    fn print_it<T: Display>(&self, first: T);
+    fn print_it<T: Display>(&self);
+    fn print_it<T: Display>(&self) -> T;
 }

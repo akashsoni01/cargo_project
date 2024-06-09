@@ -5,7 +5,14 @@
 // use hello::Solution;
 
 
+use std::collections::{HashMap, HashSet};
+use std::ptr::hash;
+
 mod alien;
+mod vector;
+mod strings;
+mod hello;
+mod arrays;
 
 fn f(s: &mut String) {
     *s = String::from("other");
@@ -23,8 +30,9 @@ fn f3(s: String) {
 fn main() {
     // let mut s1 = String::from("hello world"); //
     // f(&mut s1);
+    // println!("reversed string = {}", strings::reverse_string(&mut "hello".to_string()));
+    // println!("reversed string = {}", strings::reverse("hello"));
 
-    alien::test();
 }
 
 

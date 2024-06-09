@@ -11,4 +11,5 @@ impl Solution {
     pub fn test_non_static(&self) {
         println!("non static function / hello world");
     }
+
 }
