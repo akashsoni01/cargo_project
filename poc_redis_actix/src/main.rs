@@ -6,7 +6,16 @@ use rustis::{
 };
 use rustis::commands::StringCommands;
 use rustis::resp::cmd;
+use uuid::{NoContext, Timestamp, Uuid};
 
+/*
+pub fn current_thread_runtime() -> tokio::runtime::Runtime {
+    let mut builder = tokio::runtime::Builder::new_current_thread();
+    builder.enable_io();
+    builder.enable_time();
+    builder.build().unwrap()
+}
+*/
 /*
 request
 http://localhost:8080/test_lang2?lang=hi-in&query={}
@@ -79,21 +88,18 @@ impl AppState {
 async fn test_redis_set_1(
     data: web::Data<AppState>,
 ) -> impl Responder {
-    &data.redis_client.client.send(cmd("MSET")
-                                        .arg("key1")
-                                        .arg("value1")
-                                        .arg("key2")
-                                        .arg("value2")
-                                        .arg("key3")
-                                        .arg("value3")
-                                        .arg("key4")
-                                        .arg("value4"),
-                                    None,
-    )
-        .await
-        .unwrap()
-        .to::<()>()
-        .unwrap();
+    let key_uuid_stirng = Uuid::new_v4().to_string();
+    let value_uuid_stirng = Uuid::new_v4().to_string();
+    data.redis_client.client.set(key_uuid_stirng, value_uuid_stirng).await.unwrap();
+    // &data.redis_client.client.send(cmd("MSET")
+    //                                     .arg(key_uuid_stirng)
+    //                                     .arg(value_uuid_stirng),
+    //                                 None,
+    // )
+    //     .await
+    //     .unwrap()
+    //     .to::<()>()
+    //     .unwrap();
     return HttpResponse::Ok().body("saved!")
 
 }
@@ -107,7 +113,6 @@ async fn index(_req: HttpRequest) -> impl Responder {
 async fn test_redis_set_2(
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let client = &data.redis_client.client;
     let values: Vec<String> = data.redis_client.client
         .send(
             cmd("MGET").arg("key1").arg("key2").arg("key3").arg("key4"),
@@ -127,14 +132,14 @@ async fn test_redis_set_2(
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
-    let state = AppState::build().await.clone();
+    let state = AppState::build().await;
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
             .service(test_redis_set_2)
             .route("/hey2", web::get().to(test_redis_set_1))
             .route("/hey", web::get().to(manual_hello))
-    })
+    }).workers(4)
         .bind(("127.0.0.1", 8080))?
         .run()
         .await
@@ -142,3 +147,33 @@ async fn main() -> std::io::Result<()> {
 
 
 
+/*
+Running 5s test @ http://127.0.0.1:8080/hey2
+  8 threads and 800 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     4.83ms  709.28us  16.14ms   79.06%
+    Req/Sec     5.46k     1.60k    8.75k    59.50%
+  217181 requests in 5.01s, 16.78MB read
+  Socket errors: connect 555, read 115, write 0, timeout 0
+Requests/sec:  43381.23
+Transfer/sec:      3.35MB
+(base) akashsoni@Akashs-MacBook-Air poc_redis_actix % wrk -t8 -c400 -d5s -s test.lua http://127.0.0.1:8080/hey
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+test.lua: cannot open test.lua: No such file or directory
+Running 5s test @ http://127.0.0.1:8080/hey
+  8 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    20.77ms   51.09ms 491.42ms   88.59%
+    Req/Sec    34.41k    31.25k  171.37k    78.68%
+  1251736 requests in 5.05s, 102.66MB read
+  Socket errors: connect 155, read 115, write 0, timeout 0
+Requests/sec: 248079.55
+Transfer/sec:     20.35MB
+*/
