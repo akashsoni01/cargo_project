@@ -115,6 +115,16 @@ async fn test_redis_set_1(
     return HttpResponse::Ok().body("saved!")
 }
 
+#[get("/hey3")]
+async fn test_redis_set_3(
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let key_uuid_stirng = Uuid::new_v4().to_string();
+    let value_uuid_stirng = Uuid::new_v4().to_string();
+    data.redis_client.client.set(key_uuid_stirng, value_uuid_stirng).await.unwrap();
+    return HttpResponse::Ok().body("saved!")
+}
+
 #[get("/")]
 async fn index(_req: HttpRequest) -> impl Responder {
     "Welcome!"
