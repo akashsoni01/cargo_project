@@ -7,7 +7,10 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3894fee0-044e-4f97-b4fb-d9b816ce9a9a" name="Changes" comment="comment removed" />
+    <list default="true" id="3894fee0-044e-4f97-b4fb-d9b816ce9a9a" name="Changes" comment="comment removed">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../poc_rust_memory/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../poc_rust_memory/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -96,6 +99,7 @@
       <workItem from="1706359814317" duration="114000" />
       <workItem from="1715333822859" duration="1211000" />
       <workItem from="1717953664204" duration="195000" />
+      <workItem from="1718205479953" duration="882000" />
     </task>
     <task id="LOCAL-00001" summary="refrence experiment">
       <option name="closed" value="true" />
