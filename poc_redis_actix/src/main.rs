@@ -65,6 +65,7 @@ pub struct RedisClient {
 // connectino, power, change
 impl RedisClient {
     async fn build() -> Self {
+
         let client = Client::connect("127.0.0.1:6379").await.unwrap();
         return Self {
             client
@@ -85,23 +86,33 @@ impl AppState {
     }
 }
 
+
+/*
+// no need to spawn task if the number of task is one hahahah
+
+async fn test_redis_set_1(
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let tasks = tokio::spawn(async move {
+        let client = data.redis_client.client.clone();
+        let key_uuid_stirng = Uuid::new_v4().to_string();
+        let value_uuid_stirng = Uuid::new_v4().to_string();
+        client.set(key_uuid_stirng, value_uuid_stirng).await.unwrap();
+    });
+    futures_util::future::join_all(tasks).await;
+    return HttpResponse::Ok().body("saved!")
+
+}
+
+*/
+
 async fn test_redis_set_1(
     data: web::Data<AppState>,
 ) -> impl Responder {
     let key_uuid_stirng = Uuid::new_v4().to_string();
     let value_uuid_stirng = Uuid::new_v4().to_string();
     data.redis_client.client.set(key_uuid_stirng, value_uuid_stirng).await.unwrap();
-    // &data.redis_client.client.send(cmd("MSET")
-    //                                     .arg(key_uuid_stirng)
-    //                                     .arg(value_uuid_stirng),
-    //                                 None,
-    // )
-    //     .await
-    //     .unwrap()
-    //     .to::<()>()
-    //     .unwrap();
     return HttpResponse::Ok().body("saved!")
-
 }
 
 #[get("/")]
@@ -177,3 +188,5 @@ Running 5s test @ http://127.0.0.1:8080/hey
 Requests/sec: 248079.55
 Transfer/sec:     20.35MB
 */
+
+
