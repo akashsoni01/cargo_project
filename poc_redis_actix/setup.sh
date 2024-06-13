@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pull the latest Redis image
-docker-compose pull redis
+#docker-compose pull redis
 
 # Start the Redis container using Docker Compose
 docker-compose up -d

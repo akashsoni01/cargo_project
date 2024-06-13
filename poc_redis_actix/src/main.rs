@@ -7,6 +7,8 @@ use rustis::{
 use rustis::commands::StringCommands;
 use rustis::resp::cmd;
 use uuid::{NoContext, Timestamp, Uuid};
+use dotenv::dotenv;
+use std::env;
 
 /*
 pub fn current_thread_runtime() -> tokio::runtime::Runtime {
@@ -66,7 +68,7 @@ pub struct RedisClient {
 impl RedisClient {
     async fn build() -> Self {
 
-        let client = Client::connect("redis://redis_container:6379").await.unwrap();
+        let client = Client::connect("127.0.0.1:6379").await.unwrap();
         return Self {
             client
         }
@@ -151,6 +153,14 @@ async fn test_redis_set_2(
 #[actix_web::main]
 #[cfg_attr(feature = "tokio-runtime", tokio::main)]
 async fn main() -> std::io::Result<()> {
+    // Load environment variables from the .env file
+    dotenv().ok();
+
+    // Retrieve the Redis URL from the environment variables
+    // let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set");
+    // let redis_url = env::var("127.0.0.1:6378").expect("REDIS_URL must be set");
+
+
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let state = AppState::build().await;
