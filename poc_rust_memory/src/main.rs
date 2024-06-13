@@ -1,1 +1,3 @@
-mod Arc_RwLock_String;
+fn main() {
+    println!("hello world");
+}

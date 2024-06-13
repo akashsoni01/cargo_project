@@ -66,7 +66,7 @@ pub struct RedisClient {
 impl RedisClient {
     async fn build() -> Self {
 
-        let client = Client::connect("127.0.0.1:6379").await.unwrap();
+        let client = Client::connect("redis://redis_container:6379").await.unwrap();
         return Self {
             client
         }
