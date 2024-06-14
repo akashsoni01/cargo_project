@@ -29,3 +29,16 @@
 #
 ## Start the application
 #CMD ./poc_redis_actix
+
+
+FROM cassandra:latest
+
+# Copy the initialization script and the entrypoint script into the container
+COPY init-keyspace.cql /scripts/init-keyspace.cql
+COPY cassandra-entrypoint.sh /scripts/cassandra-entrypoint.sh
+
+# Make the entrypoint script executable
+RUN chmod +x /scripts/cassandra-entrypoint.sh
+
+# Set the entrypoint to the custom script
+ENTRYPOINT ["/scripts/cassandra-entrypoint.sh"]

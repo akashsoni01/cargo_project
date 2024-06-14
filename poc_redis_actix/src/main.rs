@@ -1,4 +1,4 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, middleware, HttpRequest};
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, middleware, HttpRequest, post};
 use actix_web::cookie::time::macros::date;
 use actix_web::web::service;
 use rustis::{
@@ -132,6 +132,16 @@ async fn index(_req: HttpRequest) -> impl Responder {
     "Welcome!"
 }
 
+#[post("/post_api")]
+async fn post_api(
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let key_uuid_stirng = Uuid::new_v4().to_string();
+    let value_uuid_stirng = Uuid::new_v4().to_string();
+    data.redis_client.client.set(key_uuid_stirng, value_uuid_stirng).await.unwrap();
+    return HttpResponse::Ok().body("saved!")
+}
+
 #[get("/test_redis_set_2")]
 async fn test_redis_set_2(
     data: web::Data<AppState>,
@@ -168,6 +178,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(state.clone()))
             .service(test_redis_set_2)
+            .service(post_api)
             .route("/hey2", web::get().to(test_redis_set_1))
             .route("/hey", web::get().to(manual_hello))
     }).workers(4)

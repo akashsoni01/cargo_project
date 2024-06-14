@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: "cassandra:latest"
+    build: .
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+#    volumes:
+#      - ./init-keyspace.cql:/docker-entrypoint-initdb.d/init-keyspace.cql
+
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_URL=redis://redis_container:6379/
+
+volumes:
+  redis_data:
+#  cassandra_data:
