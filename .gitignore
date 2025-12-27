@@ -16,3 +16,5 @@ jupiter/docs/data/electronics.csv
 jupyter/electronics.csv
 poc_sqlx/.env
 jupyter/docs/data/electronics.csv
+*.iml
+*.xml

@@ -1,0 +1,12 @@
+[package]
+name = "poc_sqlite"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rusqlite = "0.31.0"
+serde = { version = "1.0", features = ["derive"] }
+validator = "0.18.1"
+chrono = { version = "0.4", features = ["serde"] }

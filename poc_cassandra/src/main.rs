@@ -1,4 +1,4 @@
-use scylla::{Session, SessionBuilder};
+/*use scylla::{Session, SessionBuilder};
 use std::error::Error;
 
 #[tokio::main]
@@ -16,9 +16,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+*/
 
-
-/*
 use scylla::{Session, SessionBuilder};
 use std::error::Error;
 
@@ -53,15 +52,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     session.query(create_table, &[]).await?;
 
     // Insert some dummy data
-    let insert_data = "
-        INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Alice', 'alice@example.com', 'password1');
-        INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Bob', 'bob@example.com', 'password2');
-        INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Charlie', 'charlie@example.com', 'password3');
-    ";
-    session.query(insert_data, &[]).await?;
+    // let insert_data = "
+    //     INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Alice', 'alice@example.com', 'password1');
+    //     INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Bob', 'bob@example.com', 'password2');
+    //     INSERT INTO users (id, name, email, password) VALUES (uuid(), 'Charlie', 'charlie@example.com', 'password3');
+    // ";
+    // session.query(insert_data, &[]).await?;
 
     println!("Keyspace and table created, and data inserted successfully.");
 
     Ok(())
 }
-*/
