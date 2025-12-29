@@ -34,20 +34,13 @@ impl UserRepository {
 impl Repository for UserRepository {
     /// Initialize the repository (create keyspace and table if needed)
     /// This is isolated - failures here don't affect other repositories
+    /// Uses common helper methods from the trait
     async fn initialize(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
         info!("Initializing UserRepository database schema (keyspace: {})...", self.keyspace);
         
-        // Wait for connection with timeout - isolated to this repository
-        let mut attempts = 0;
-        const MAX_ATTEMPTS: u32 = 30;
-        
-        while !self.manager.is_connected().await && attempts < MAX_ATTEMPTS {
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-            attempts += 1;
-        }
-
-        if !self.manager.is_connected().await {
-            warn!("UserRepository: Failed to connect to Cassandra after {} attempts", MAX_ATTEMPTS);
+        // Use common helper method to wait for connection
+        if !self.wait_for_connection_default().await {
+            warn!("UserRepository: Failed to connect to Cassandra after timeout");
             return Err(format!("Failed to connect to Cassandra for UserRepository (keyspace: {})", self.keyspace).into());
         }
 
@@ -82,7 +75,11 @@ impl Repository for UserRepository {
 
 impl UserRepository {
     /// Create a new user (INSERT)
+    /// Uses common connection checking from Repository trait
     pub async fn create(&self, user: &User) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Creating user: {} ({})", user.name, user.email);
         
         let values = format!("{}, '{}', '{}', '{}'", user.id, user.name, user.email, user.password);
@@ -100,7 +97,11 @@ impl UserRepository {
     }
 
     /// Get a user by ID (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting user by ID: {}", id);
         
         match self.manager.get_user_by_id(id).await {
@@ -120,7 +121,11 @@ impl UserRepository {
     }
 
     /// Get a user by email (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_by_email(&self, email: &str) -> Result<Option<User>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting user by email: {}", email);
         
         match self.manager.get_user_by_email(email).await {
@@ -140,7 +145,11 @@ impl UserRepository {
     }
 
     /// Get all users (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_all(&self) -> Result<Vec<User>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting all users");
         
         match self.manager.get_all_users().await {
@@ -156,7 +165,11 @@ impl UserRepository {
     }
 
     /// Update a user (UPDATE)
+    /// Uses common connection checking from Repository trait
     pub async fn update(&self, id: Uuid, name: Option<&str>, email: Option<&str>, password: Option<&str>) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Updating user ID: {}", id);
         
         match self.manager.update_user(id, name, email, password).await {
@@ -172,7 +185,11 @@ impl UserRepository {
     }
 
     /// Delete a user by ID (DELETE)
+    /// Uses common connection checking from Repository trait
     pub async fn delete(&self, id: Uuid) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Deleting user ID: {}", id);
         
         match self.manager.delete_user(id).await {
@@ -188,7 +205,11 @@ impl UserRepository {
     }
 
     /// Delete a user by email (DELETE)
+    /// Uses common connection checking from Repository trait
     pub async fn delete_by_email(&self, email: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Deleting user with email: {}", email);
         
         match self.manager.delete_user_by_email(email).await {

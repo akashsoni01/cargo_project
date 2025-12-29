@@ -34,20 +34,13 @@ impl ProductRepository {
 impl Repository for ProductRepository {
     /// Initialize the repository (create keyspace and table if needed)
     /// This is isolated - failures here don't affect other repositories
+    /// Uses common helper methods from the trait
     async fn initialize(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
         info!("Initializing ProductRepository database schema (keyspace: {})...", self.keyspace);
         
-        // Wait for connection with timeout - isolated to this repository
-        let mut attempts = 0;
-        const MAX_ATTEMPTS: u32 = 30;
-        
-        while !self.manager.is_connected().await && attempts < MAX_ATTEMPTS {
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-            attempts += 1;
-        }
-
-        if !self.manager.is_connected().await {
-            warn!("ProductRepository: Failed to connect to Cassandra after {} attempts", MAX_ATTEMPTS);
+        // Use common helper method to wait for connection
+        if !self.wait_for_connection_default().await {
+            warn!("ProductRepository: Failed to connect to Cassandra after timeout");
             return Err(format!("Failed to connect to Cassandra for ProductRepository (keyspace: {})", self.keyspace).into());
         }
 
@@ -82,7 +75,11 @@ impl Repository for ProductRepository {
 
 impl ProductRepository {
     /// Create a new product (INSERT)
+    /// Uses common connection checking from Repository trait
     pub async fn create(&self, product: &Product) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Creating product: {} (${})", product.name, product.price);
         
         let values = format!("{}, '{}', '{}', {}, {}", 
@@ -106,7 +103,11 @@ impl ProductRepository {
     }
 
     /// Get a product by ID (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Product>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting product by ID: {}", id);
         
         // Use the manager's select method
@@ -124,7 +125,11 @@ impl ProductRepository {
     }
 
     /// Get a product by name (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_by_name(&self, name: &str) -> Result<Option<Product>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting product by name: {}", name);
         
         match self.manager.select("products", Some("id, name, description, price, stock"), Some(&format!("name = '{}'", name.replace("'", "''")))).await {
@@ -142,7 +147,11 @@ impl ProductRepository {
 
 
     /// Get all products (SELECT)
+    /// Uses common connection checking from Repository trait
     pub async fn get_all(&self) -> Result<Vec<Product>, Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Getting all products");
         
         match self.manager.select("products", Some("id, name, description, price, stock"), None).await {
@@ -159,7 +168,11 @@ impl ProductRepository {
     }
 
     /// Update a product (UPDATE)
+    /// Uses common connection checking from Repository trait
     pub async fn update(&self, id: Uuid, name: Option<&str>, description: Option<&str>, price: Option<f64>, stock: Option<i32>) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Updating product ID: {}", id);
         
         let mut updates = Vec::new();
@@ -196,7 +209,11 @@ impl ProductRepository {
     }
 
     /// Delete a product by ID (DELETE)
+    /// Uses common connection checking from Repository trait
     pub async fn delete(&self, id: Uuid) -> Result<(), Box<dyn Error + Send + Sync>> {
+        // Ensure connection before operation
+        self.ensure_connected().await?;
+        
         info!("Deleting product ID: {}", id);
         
         match self.manager.delete("products", &format!("id = {}", id)).await {

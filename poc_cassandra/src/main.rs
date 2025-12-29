@@ -50,10 +50,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("Note: Each repository has independent connection management.");
     info!("Connection problems in one repository will not impact others.\n");
     
+    // Validate configurations first
+    info!("Validating repository configurations...");
+    match user_repo.validate_config() {
+        Ok(_) => info!("✓ UserRepository configuration valid"),
+        Err(e) => warn!("✗ UserRepository configuration invalid: {}", e),
+    }
+    match product_repo.validate_config() {
+        Ok(_) => info!("✓ ProductRepository configuration valid"),
+        Err(e) => warn!("✗ ProductRepository configuration invalid: {}", e),
+    }
+    info!("");
+
     // Initialize UserRepository - isolated error handling
+    // Using initialize_with_validation which validates then initializes
     info!("Initializing UserRepository (keyspace: {})...", user_repo.keyspace_name());
-    match user_repo.initialize().await {
-        Ok(_) => info!("✓ UserRepository initialized successfully"),
+    match user_repo.initialize_with_validation().await {
+        Ok(_) => {
+            info!("✓ UserRepository initialized successfully");
+            user_repo.log_status().await;
+        }
         Err(e) => {
             warn!("✗ UserRepository initialization failed: {}", e);
             warn!("  This will not affect ProductRepository initialization.");
@@ -63,8 +79,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Initialize ProductRepository - isolated error handling
     info!("Initializing ProductRepository (keyspace: {})...", product_repo.keyspace_name());
-    match product_repo.initialize().await {
-        Ok(_) => info!("✓ ProductRepository initialized successfully"),
+    match product_repo.initialize_with_validation().await {
+        Ok(_) => {
+            info!("✓ ProductRepository initialized successfully");
+            product_repo.log_status().await;
+        }
         Err(e) => {
             warn!("✗ ProductRepository initialization failed: {}", e);
             warn!("  This will not affect UserRepository operations.");
