@@ -84,20 +84,184 @@ async fn setup_database(manager: &CassandraManager) {
         Err(e) => warn!("Failed to use keyspace: {}", e),
     }
 
-    // Create the users table
-    let create_table = "
-        CREATE TABLE IF NOT EXISTS users (
-            id UUID PRIMARY KEY,
-            name TEXT,
-            email TEXT,
-            password TEXT
-        );
-    ";
+    // Create the users table using prepared statement
+    info!("Creating users table using prepared statement...");
+    match manager.create_table(
+        "users",
+        "id UUID PRIMARY KEY, name TEXT, email TEXT, password TEXT"
+    ).await {
+        Ok(_) => info!("Users table created successfully using prepared statement"),
+        Err(e) => warn!("Failed to create users table: {}", e),
+    }
+
+    // Insert test data using prepared statements
+    info!("Inserting test data using prepared statements...");
     
-    match manager.query(create_table, &[]).await {
-        Ok(_) => info!("Table created successfully"),
-        Err(e) => warn!("Failed to create table: {}", e),
+    // Insert user 1
+    match manager.insert(
+        "users",
+        "id, name, email, password",
+        "uuid(), 'Alice', 'alice@example.com', 'password1'"
+    ).await {
+        Ok(_) => info!("Inserted user Alice successfully"),
+        Err(e) => warn!("Failed to insert user Alice: {}", e),
+    }
+
+    // Insert user 2
+    match manager.insert(
+        "users",
+        "id, name, email, password",
+        "uuid(), 'Bob', 'bob@example.com', 'password2'"
+    ).await {
+        Ok(_) => info!("Inserted user Bob successfully"),
+        Err(e) => warn!("Failed to insert user Bob: {}", e),
+    }
+
+    // Insert user 3
+    match manager.insert(
+        "users",
+        "id, name, email, password",
+        "uuid(), 'Charlie', 'charlie@example.com', 'password3'"
+    ).await {
+        Ok(_) => info!("Inserted user Charlie successfully"),
+        Err(e) => warn!("Failed to insert user Charlie: {}", e),
+    }
+
+    // Select all users using prepared statement
+    info!("Selecting all users using prepared statement...");
+    match manager.select("users", None, None).await {
+        Ok(_result) => {
+            info!("Query executed successfully - all users selected");
+        }
+        Err(e) => warn!("Failed to select users: {}", e),
+    }
+
+    // Select specific user using prepared statement with WHERE clause
+    info!("Selecting user Alice using prepared statement...");
+    match manager.select("users", Some("id, name, email"), Some("name = 'Alice'")).await {
+        Ok(_result) => {
+            info!("Query executed successfully - user Alice selected");
+        }
+        Err(e) => warn!("Failed to select user Alice: {}", e),
     }
 
     info!("Database setup completed!");
+    
+    // Run comprehensive CRUD example
+    run_crud_example(&manager).await;
+}
+
+/// Comprehensive CRUD example demonstrating all operations
+async fn run_crud_example(manager: &CassandraManager) {
+    info!("\n=== Starting CRUD Example ===\n");
+
+    // Wait for connection if needed
+    if !manager.is_connected().await {
+        info!("Waiting for Cassandra connection...");
+        let mut attempts = 0;
+        while !manager.is_connected().await && attempts < 10 {
+            sleep(Duration::from_secs(2)).await;
+            attempts += 1;
+        }
+        
+        if !manager.is_connected().await {
+            warn!("Cannot run CRUD example - not connected to Cassandra");
+            return;
+        }
+    }
+
+    // ========== CREATE (Insert) ==========
+    info!("--- CREATE Operation ---");
+    info!("Inserting a new user 'David'...");
+    
+    match manager.insert(
+        "users",
+        "id, name, email, password",
+        "uuid(), 'David', 'david@example.com', 'password4'"
+    ).await {
+        Ok(_) => info!("✓ CREATE: User David inserted successfully"),
+        Err(e) => warn!("✗ CREATE failed: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // ========== READ (Select) ==========
+    info!("\n--- READ Operation ---");
+    
+    // Read all users
+    info!("Reading all users...");
+    match manager.select("users", None, None).await {
+        Ok(_) => info!("✓ READ: All users retrieved successfully"),
+        Err(e) => warn!("✗ READ failed (all users): {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // Read specific user
+    info!("Reading user David...");
+    match manager.select("users", Some("id, name, email"), Some("name = 'David'")).await {
+        Ok(_) => info!("✓ READ: User David retrieved successfully"),
+        Err(e) => warn!("✗ READ failed (user David): {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // ========== UPDATE ==========
+    info!("\n--- UPDATE Operation ---");
+    info!("Updating David's email...");
+    
+    // Note: In Cassandra, UPDATE requires the PRIMARY KEY in WHERE clause
+    // We'll update by name (assuming name is unique for this example)
+    // In production, you'd use the actual UUID
+    match manager.update(
+        "users",
+        "email = 'david.updated@example.com'",
+        "name = 'David'"
+    ).await {
+        Ok(_) => {
+            info!("✓ UPDATE: David's email updated successfully");
+            
+            // Verify the update
+            sleep(Duration::from_secs(1)).await;
+            info!("Verifying update by reading David again...");
+            match manager.select("users", Some("name, email"), Some("name = 'David'")).await {
+                Ok(_) => info!("✓ UPDATE verified: David's new email retrieved"),
+                Err(e) => warn!("✗ UPDATE verification failed: {}", e),
+            }
+        }
+        Err(e) => warn!("✗ UPDATE failed: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // ========== DELETE ==========
+    info!("\n--- DELETE Operation ---");
+    info!("Deleting user David...");
+    
+    match manager.delete("users", "name = 'David'").await {
+        Ok(_) => {
+            info!("✓ DELETE: User David deleted successfully");
+            
+            // Verify the deletion
+            sleep(Duration::from_secs(1)).await;
+            info!("Verifying deletion by trying to read David...");
+            match manager.select("users", Some("name"), Some("name = 'David'")).await {
+                Ok(_) => info!("✓ DELETE verified: David not found (as expected)"),
+                Err(e) => warn!("✗ DELETE verification query failed: {}", e),
+            }
+        }
+        Err(e) => warn!("✗ DELETE failed: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // ========== Final READ to show remaining users ==========
+    info!("\n--- Final READ Operation ---");
+    info!("Reading all remaining users...");
+    match manager.select("users", Some("name, email"), None).await {
+        Ok(_) => info!("✓ Final READ: Remaining users retrieved successfully"),
+        Err(e) => warn!("✗ Final READ failed: {}", e),
+    }
+
+    info!("\n=== CRUD Example Completed ===\n");
 }

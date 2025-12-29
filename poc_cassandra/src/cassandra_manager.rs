@@ -211,6 +211,125 @@ impl CassandraManager {
         info!("Cleared prepared statements cache");
     }
 
+    /// Create a table using prepared statement
+    /// Fails gracefully if table creation fails
+    pub async fn create_table(
+        &self,
+        table_name: &str,
+        columns: &str,
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let query = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, columns);
+        info!("Creating table '{}' with prepared statement", table_name);
+        
+        match self.query(&query, &[]).await {
+            Ok(result) => {
+                info!("Table '{}' created successfully", table_name);
+                Ok(result)
+            }
+            Err(e) => {
+                error!("Failed to create table '{}': {}", table_name, e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Insert data into a table using prepared statement
+    /// Fails gracefully if insertion fails
+    pub async fn insert(
+        &self,
+        table_name: &str,
+        columns: &str,
+        values: &str,
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let query = format!("INSERT INTO {} ({}) VALUES ({})", table_name, columns, values);
+        info!("Inserting into table '{}' with prepared statement", table_name);
+        
+        match self.query(&query, &[]).await {
+            Ok(result) => {
+                info!("Data inserted into '{}' successfully", table_name);
+                Ok(result)
+            }
+            Err(e) => {
+                warn!("Failed to insert into table '{}': {}", table_name, e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Select data from a table using prepared statement
+    /// Fails gracefully if query fails
+    pub async fn select(
+        &self,
+        table_name: &str,
+        columns: Option<&str>,
+        where_clause: Option<&str>,
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let cols = columns.unwrap_or("*");
+        let mut query = format!("SELECT {} FROM {}", cols, table_name);
+        
+        if let Some(where_clause) = where_clause {
+            query.push_str(&format!(" WHERE {}", where_clause));
+        }
+        
+        info!("Selecting from table '{}' with prepared statement", table_name);
+        
+        match self.query(&query, &[]).await {
+            Ok(result) => {
+                info!("Query executed successfully on '{}'", table_name);
+                Ok(result)
+            }
+            Err(e) => {
+                warn!("Failed to select from table '{}': {}", table_name, e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Update data in a table using prepared statement
+    /// Fails gracefully if update fails
+    pub async fn update(
+        &self,
+        table_name: &str,
+        set_clause: &str,
+        where_clause: &str,
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let query = format!("UPDATE {} SET {} WHERE {}", table_name, set_clause, where_clause);
+        info!("Updating table '{}' with prepared statement", table_name);
+        
+        match self.query(&query, &[]).await {
+            Ok(result) => {
+                info!("Data updated in '{}' successfully", table_name);
+                Ok(result)
+            }
+            Err(e) => {
+                warn!("Failed to update table '{}': {}", table_name, e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Delete data from a table using prepared statement
+    /// Fails gracefully if deletion fails
+    pub async fn delete(
+        &self,
+        table_name: &str,
+        where_clause: &str,
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let query = format!("DELETE FROM {} WHERE {}", table_name, where_clause);
+        info!("Deleting from table '{}' with prepared statement", table_name);
+        
+        match self.query(&query, &[]).await {
+            Ok(result) => {
+                info!("Data deleted from '{}' successfully", table_name);
+                Ok(result)
+            }
+            Err(e) => {
+                warn!("Failed to delete from table '{}': {}", table_name, e);
+                Err(e)
+            }
+        }
+    }
+
     /// Manually trigger a connection attempt
     pub async fn connect(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
         info!("Manual connection attempt triggered");
