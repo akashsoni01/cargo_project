@@ -1,4 +1,5 @@
 use crate::cassandra_manager::CassandraManager;
+use crate::repository::Repository;
 use crate::user::User;
 use uuid::Uuid;
 use std::error::Error;
@@ -7,54 +8,79 @@ use std::sync::Arc;
 
 /// UserRepository handles all User CRUD operations
 /// Uses a dedicated keyspace: "user_keyspace"
+/// Connection issues in this repository do not affect other repositories
 pub struct UserRepository {
     manager: Arc<CassandraManager>,
+    keyspace: String,
 }
 
 impl UserRepository {
     /// Create a new UserRepository instance
+    /// Each repository has its own independent CassandraManager instance
+    /// This ensures connection problems in one repository don't affect others
     pub fn new(connection_string: String) -> Arc<Self> {
-        info!("Initializing UserRepository with keyspace: user_keyspace");
-        let manager = CassandraManager::new(connection_string, Some("user_keyspace".to_string()));
-        Arc::new(Self { manager })
+        let keyspace = "user_keyspace".to_string();
+        info!("Initializing UserRepository with keyspace: {}", keyspace);
+        let manager = CassandraManager::new(connection_string, Some(keyspace.clone()));
+        Arc::new(Self { manager, keyspace })
     }
 
     /// Get the underlying CassandraManager
     pub fn manager(&self) -> &Arc<CassandraManager> {
         &self.manager
     }
+}
 
+impl Repository for UserRepository {
     /// Initialize the repository (create keyspace and table if needed)
-    pub async fn initialize(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
-        info!("Initializing UserRepository database schema...");
+    /// This is isolated - failures here don't affect other repositories
+    async fn initialize(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
+        info!("Initializing UserRepository database schema (keyspace: {})...", self.keyspace);
         
-        // Wait for connection
+        // Wait for connection with timeout - isolated to this repository
         let mut attempts = 0;
-        while !self.manager.is_connected().await && attempts < 30 {
+        const MAX_ATTEMPTS: u32 = 30;
+        
+        while !self.manager.is_connected().await && attempts < MAX_ATTEMPTS {
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
             attempts += 1;
         }
 
         if !self.manager.is_connected().await {
-            return Err("Failed to connect to Cassandra for UserRepository".into());
+            warn!("UserRepository: Failed to connect to Cassandra after {} attempts", MAX_ATTEMPTS);
+            return Err(format!("Failed to connect to Cassandra for UserRepository (keyspace: {})", self.keyspace).into());
         }
 
-        // Create table
+        info!("UserRepository: Connection established, creating schema...");
+
+        // Create table - errors are isolated to this repository
         match self.manager.create_table(
             "users",
             "id UUID PRIMARY KEY, name TEXT, email TEXT, password TEXT"
         ).await {
             Ok(_) => {
-                info!("✓ Users table created successfully");
+                info!("✓ UserRepository: Users table created successfully in keyspace '{}'", self.keyspace);
                 Ok(())
             }
             Err(e) => {
-                warn!("Failed to create users table: {}", e);
+                warn!("UserRepository: Failed to create users table: {}", e);
                 Err(e)
             }
         }
     }
 
+    /// Check if the repository is connected to Cassandra
+    async fn is_connected(&self) -> bool {
+        self.manager.is_connected().await
+    }
+
+    /// Get the keyspace name used by this repository
+    fn keyspace_name(&self) -> &str {
+        &self.keyspace
+    }
+}
+
+impl UserRepository {
     /// Create a new user (INSERT)
     pub async fn create(&self, user: &User) -> Result<(), Box<dyn Error + Send + Sync>> {
         info!("Creating user: {} ({})", user.name, user.email);

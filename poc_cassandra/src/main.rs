@@ -1,9 +1,11 @@
 mod cassandra_manager;
 mod user;
 mod product;
+mod repository;
 mod user_repository;
 mod product_repository;
 
+use repository::Repository;
 use user_repository::UserRepository;
 use product_repository::ProductRepository;
 use user::User;
@@ -43,15 +45,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
     sleep(Duration::from_secs(3)).await;
 
     // Initialize repositories (create keyspaces and tables)
+    // Each repository initializes independently - failures in one don't affect others
     info!("=== Initializing Repositories ===");
+    info!("Note: Each repository has independent connection management.");
+    info!("Connection problems in one repository will not impact others.\n");
+    
+    // Initialize UserRepository - isolated error handling
+    info!("Initializing UserRepository (keyspace: {})...", user_repo.keyspace_name());
     match user_repo.initialize().await {
-        Ok(_) => info!("✓ UserRepository initialized"),
-        Err(e) => warn!("✗ UserRepository initialization failed: {}", e),
+        Ok(_) => info!("✓ UserRepository initialized successfully"),
+        Err(e) => {
+            warn!("✗ UserRepository initialization failed: {}", e);
+            warn!("  This will not affect ProductRepository initialization.");
+        },
     }
+    info!("");
 
+    // Initialize ProductRepository - isolated error handling
+    info!("Initializing ProductRepository (keyspace: {})...", product_repo.keyspace_name());
     match product_repo.initialize().await {
-        Ok(_) => info!("✓ ProductRepository initialized"),
-        Err(e) => warn!("✗ ProductRepository initialization failed: {}", e),
+        Ok(_) => info!("✓ ProductRepository initialized successfully"),
+        Err(e) => {
+            warn!("✗ ProductRepository initialization failed: {}", e);
+            warn!("  This will not affect UserRepository operations.");
+        },
     }
     info!("");
 
@@ -69,18 +86,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("Repositories are ready to handle requests.\n");
     
     // Example: Keep running and periodically check connection status
+    // Each repository's connection status is checked independently
     loop {
         sleep(Duration::from_secs(10)).await;
         
-        let user_connected = user_repo.manager().is_connected().await;
-        let product_connected = product_repo.manager().is_connected().await;
+        let user_connected = user_repo.is_connected().await;
+        let product_connected = product_repo.is_connected().await;
         
         if user_connected && product_connected {
             info!("Both repositories are connected to Cassandra!");
         } else {
-            info!("Waiting for connections... (User: {}, Product: {})", 
-                if user_connected { "✓" } else { "✗" },
-                if product_connected { "✓" } else { "✗" });
+            info!("Repository connection status:");
+            info!("  UserRepository ({}): {}", 
+                user_repo.keyspace_name(),
+                if user_connected { "✓ Connected" } else { "✗ Disconnected" });
+            info!("  ProductRepository ({}): {}", 
+                product_repo.keyspace_name(),
+                if product_connected { "✓ Connected" } else { "✗ Disconnected" });
+            info!("  Note: Each repository operates independently.");
         }
     }
 }
