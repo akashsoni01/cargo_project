@@ -64,7 +64,21 @@ impl CassandraManager {
                     
                     match manager.try_connect_internal().await {
                         Ok(new_session) => {
-                            info!("Successfully connected to Cassandra!");
+                            let keyspace_info = if let Some(ref ks) = manager.keyspace {
+                                format!(" (keyspace: {})", ks)
+                            } else {
+                                String::new()
+                            };
+                            // Use println! to ensure success message is always visible
+                            let conn_info = format!("{}{}", connection_string, keyspace_info);
+                            println!("\n╔══════════════════════════════════════════════════════════════╗");
+                            println!("║  ✓ SUCCESSFULLY CONNECTED TO CASSANDRA!                      ║");
+                            println!("║  Connection: {:<50} ║", conn_info);
+                            println!("║  Status: Connection established and verified                 ║");
+                            println!("║  Ready to execute queries                                    ║");
+                            println!("╚══════════════════════════════════════════════════════════════╝\n");
+                            info!("✓ Successfully connected to Cassandra at {}{}!", connection_string, keyspace_info);
+                            info!("  Connection established and verified. Ready to execute queries.");
                             let mut s = session.lock().await;
                             *s = Some(Arc::new(new_session));
                         }
@@ -101,28 +115,100 @@ impl CassandraManager {
                         let mut stmts = manager.prepared_statements.lock().await;
                         stmts.clear();
                     }
+                    // Connection is alive and verified - no need to log every poll cycle
+                    // Success is logged when connection is first established
                 }
             }
         });
     }
 
+    /// Create keyspace if it doesn't exist
+    /// This should be called before trying to use the keyspace
+    pub async fn create_keyspace_if_not_exists(
+        &self,
+        keyspace: &str,
+        replication_factor: u32,
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        let query = format!(
+            "CREATE KEYSPACE IF NOT EXISTS {} WITH REPLICATION = {{ 'class' : 'SimpleStrategy', 'replication_factor' : {} }}",
+            keyspace, replication_factor
+        );
+        
+        info!("Creating keyspace '{}' if it doesn't exist...", keyspace);
+        
+        // First, connect without keyspace to create it
+        let builder = SessionBuilder::new().known_node(&self.connection_string);
+        let session = builder.build().await?;
+        
+        // Create the keyspace using prepared statement
+        // Convert String to &str for prepare()
+        let query_str: &str = &query;
+        let prepared = session.prepare(query_str).await
+            .map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)?;
+        
+        match session.execute_unpaged(&prepared, &[]).await {
+            Ok(_) => {
+                info!("✓ Keyspace '{}' created or already exists", keyspace);
+                Ok(())
+            }
+            Err(e) => {
+                warn!("Failed to create keyspace '{}': {}", keyspace, e);
+                Err(Box::new(e) as Box<dyn Error + Send + Sync>)
+            }
+        }
+    }
+
     /// Attempt to connect to Cassandra (internal method)
     async fn try_connect_internal(&self) -> Result<Session, Box<dyn Error + Send + Sync>> {
-        let mut builder = SessionBuilder::new().known_node(&self.connection_string);
-        
-        // Set keyspace if provided
+        // If keyspace is provided, create it first if it doesn't exist
         if let Some(ref ks) = self.keyspace {
-            builder = builder.use_keyspace(ks, true);
+            info!("Checking/creating keyspace '{}' before connecting...", ks);
+            // Try to create keyspace, but don't fail if it already exists or if connection fails
+            // We'll use a temporary session just for keyspace creation
+            if let Err(e) = self.create_keyspace_if_not_exists(ks, 1).await {
+                warn!("Could not create keyspace '{}' (may already exist or connection issue): {}", ks, e);
+                // Continue anyway - keyspace might already exist
+            }
         }
         
-        let session = builder.build().await?;
-
-        // Use keyspace if provided - set it in the session builder instead
-        // The keyspace will be used automatically for queries
+        let mut builder = SessionBuilder::new().known_node(&self.connection_string);
         
+        // Set keyspace if provided (now that we know it exists or was created)
+        if let Some(ref ks) = self.keyspace {
+            builder = builder.use_keyspace(ks, true);
+            info!("Configuring connection to use keyspace: {}", ks);
+        }
+        
+        info!("Building session connection to {}...", self.connection_string);
+        let session = match builder.build().await {
+            Ok(s) => {
+                info!("Session built successfully, verifying connection...");
+                s
+            }
+            Err(e) => {
+                warn!("Failed to build session: {}", e);
+                return Err(Box::new(e) as Box<dyn Error + Send + Sync>);
+            }
+        };
+
         // Verify connection with a simple query using prepared statement
-        let prepared = session.prepare("SELECT now() FROM system.local").await?;
-        session.execute_unpaged(&prepared, &[]).await?;
+        match session.prepare("SELECT now() FROM system.local").await {
+            Ok(prepared) => {
+                match session.execute_unpaged(&prepared, &[]).await {
+                    Ok(_) => {
+                        info!("Connection verification query executed successfully");
+                    }
+                    Err(e) => {
+                        warn!("Connection verification query failed: {}", e);
+                        return Err(Box::new(e) as Box<dyn Error + Send + Sync>);
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to prepare verification query: {}", e);
+                return Err(Box::new(e) as Box<dyn Error + Send + Sync>);
+            }
+        }
 
         Ok(session)
     }
@@ -336,7 +422,21 @@ impl CassandraManager {
         
         match self.try_connect_internal().await {
             Ok(new_session) => {
-                info!("Successfully connected to Cassandra!");
+                let keyspace_info = if let Some(ref ks) = self.keyspace {
+                    format!(" (keyspace: {})", ks)
+                } else {
+                    String::new()
+                };
+                // Use println! to ensure success message is always visible
+                let conn_info = format!("{}{}", self.connection_string, keyspace_info);
+                println!("\n╔══════════════════════════════════════════════════════════════╗");
+                println!("║  ✓ SUCCESSFULLY CONNECTED TO CASSANDRA!                      ║");
+                println!("║  Connection: {:<50} ║", conn_info);
+                println!("║  Status: Connection established and verified                 ║");
+                println!("║  Ready to execute queries                                    ║");
+                println!("╚══════════════════════════════════════════════════════════════╝\n");
+                info!("✓ Successfully connected to Cassandra at {}{}!", self.connection_string, keyspace_info);
+                info!("  Connection established and verified. Ready to execute queries.");
                 let mut s = self.session.lock().await;
                 *s = Some(Arc::new(new_session));
                 // Clear prepared statements cache on reconnection to ensure freshness

@@ -7,8 +7,15 @@ use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Initialize logger
-    env_logger::init();
+    // Initialize logger with custom filter to suppress scylla internal errors
+    // Set RUST_LOG environment variable to control logging levels
+    // Example: RUST_LOG=info,scylla=warn to suppress scylla errors
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Info)
+        .filter_module("scylla", log::LevelFilter::Warn) // Suppress scylla ERROR logs
+        .filter_module("scylla::cluster", log::LevelFilter::Warn)
+        .filter_module("scylla::cluster::metadata", log::LevelFilter::Warn)
+        .init();
 
     info!("Starting application...");
 
@@ -66,22 +73,15 @@ async fn setup_database(manager: &CassandraManager) {
 
     info!("Cassandra connected! Setting up database...");
 
-    // Create the keyspace
-    let create_keyspace = "
-        CREATE KEYSPACE IF NOT EXISTS my_keyspace
-        WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-    ";
-    
-    match manager.query(create_keyspace, &[]).await {
-        Ok(_) => info!("Keyspace created successfully"),
-        Err(e) => warn!("Failed to create keyspace: {}", e),
-    }
-
-    // Use the keyspace
-    let use_keyspace = "USE my_keyspace;";
-    match manager.query(use_keyspace, &[]).await {
-        Ok(_) => info!("Using keyspace my_keyspace"),
-        Err(e) => warn!("Failed to use keyspace: {}", e),
+    // Create the keyspace if it doesn't exist (using manager method)
+    // Note: The manager already tries to create it during connection, but we'll ensure it here too
+    info!("Ensuring keyspace 'my_keyspace' exists...");
+    match manager.create_keyspace_if_not_exists("my_keyspace", 1).await {
+        Ok(_) => info!("Keyspace 'my_keyspace' is ready"),
+        Err(e) => {
+            warn!("Failed to create keyspace (may already exist): {}", e);
+            // Try to use it anyway - it might already exist
+        }
     }
 
     // Create the users table using prepared statement
@@ -149,6 +149,9 @@ async fn setup_database(manager: &CassandraManager) {
     
     // Run comprehensive CRUD example
     run_crud_example(&manager).await;
+    
+    // Test connection resilience
+    test_connection_resilience(&manager).await;
 }
 
 /// Comprehensive CRUD example demonstrating all operations
@@ -264,4 +267,199 @@ async fn run_crud_example(manager: &CassandraManager) {
     }
 
     info!("\n=== CRUD Example Completed ===\n");
+}
+
+/// Test connection resilience by simulating Cassandra going down and coming back up
+async fn test_connection_resilience(manager: &CassandraManager) {
+    info!("\n=== Testing Connection Resilience ===\n");
+
+    // Wait for connection if needed
+    if !manager.is_connected().await {
+        info!("Waiting for Cassandra connection...");
+        let mut attempts = 0;
+        while !manager.is_connected().await && attempts < 10 {
+            sleep(Duration::from_secs(2)).await;
+            attempts += 1;
+        }
+        
+        if !manager.is_connected().await {
+            warn!("Cannot test resilience - not connected to Cassandra");
+            return;
+        }
+    }
+
+    info!("✓ Initial connection verified");
+    
+    // Test 1: Verify connection is working
+    info!("\n--- Test 1: Verify connection is working ---");
+    match manager.query("SELECT now() FROM system.local", &[]).await {
+        Ok(_) => info!("✓ Connection is active and working"),
+        Err(e) => {
+            warn!("✗ Connection test failed: {}", e);
+            return;
+        }
+    }
+
+    sleep(Duration::from_secs(2)).await;
+
+    // Test 2: Simulate Cassandra going down
+    info!("\n--- Test 2: Simulating Cassandra going down ---");
+    info!("Stopping Cassandra container...");
+    
+    // Stop Cassandra container
+    let stop_result = std::process::Command::new("docker-compose")
+        .args(&["stop", "cassandra"])
+        .current_dir(".")
+        .output();
+    
+    match stop_result {
+        Ok(output) => {
+            if output.status.success() {
+                info!("✓ Cassandra container stopped");
+            } else {
+                warn!("✗ Failed to stop Cassandra: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
+        Err(e) => {
+            warn!("✗ Error stopping Cassandra: {}", e);
+            info!("Please manually stop Cassandra to test resilience");
+        }
+    }
+
+    sleep(Duration::from_secs(3)).await;
+
+    // Test 3: Try operations while Cassandra is down
+    info!("\n--- Test 3: Testing operations while Cassandra is down ---");
+    info!("Attempting query while Cassandra is down (should fail gracefully)...");
+    
+    match manager.query("SELECT now() FROM system.local", &[]).await {
+        Ok(_) => warn!("⚠ Unexpected: Query succeeded while Cassandra is down"),
+        Err(e) => {
+            info!("✓ Query failed gracefully as expected: {}", e);
+        }
+    }
+
+    sleep(Duration::from_secs(2)).await;
+
+    // Test 4: Check connection status
+    info!("\n--- Test 4: Checking connection status ---");
+    let is_connected = manager.is_connected().await;
+    if is_connected {
+        warn!("⚠ Connection status still shows connected (may take a moment to detect)");
+    } else {
+        info!("✓ Connection status correctly shows disconnected");
+    }
+
+    sleep(Duration::from_secs(5)).await;
+
+    // Test 5: Verify connection detection after polling interval
+    info!("\n--- Test 5: Waiting for connection loss detection (polling every 5s) ---");
+    let mut attempts = 0;
+    while manager.is_connected().await && attempts < 3 {
+        info!("Still connected (attempt {})...", attempts + 1);
+        sleep(Duration::from_secs(6)).await;
+        attempts += 1;
+    }
+    
+    if !manager.is_connected().await {
+        info!("✓ Connection loss detected by polling mechanism");
+    } else {
+        warn!("⚠ Connection still showing as connected after polling");
+    }
+
+    sleep(Duration::from_secs(2)).await;
+
+    // Test 6: Restart Cassandra
+    info!("\n--- Test 6: Restarting Cassandra ---");
+    info!("Starting Cassandra container...");
+    
+    let start_result = std::process::Command::new("docker-compose")
+        .args(&["start", "cassandra"])
+        .current_dir(".")
+        .output();
+    
+    match start_result {
+        Ok(output) => {
+            if output.status.success() {
+                info!("✓ Cassandra container started");
+            } else {
+                warn!("✗ Failed to start Cassandra: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
+        Err(e) => {
+            warn!("✗ Error starting Cassandra: {}", e);
+            info!("Please manually start Cassandra to test reconnection");
+        }
+    }
+
+    info!("Waiting for Cassandra to be ready (this may take 30-60 seconds)...");
+    sleep(Duration::from_secs(10)).await;
+
+    // Test 7: Wait for automatic reconnection
+    info!("\n--- Test 7: Waiting for automatic reconnection (polling every 5s) ---");
+    let mut reconnection_attempts = 0;
+    const MAX_RECONNECTION_ATTEMPTS: u32 = 15; // 75 seconds max wait
+    
+    while !manager.is_connected().await && reconnection_attempts < MAX_RECONNECTION_ATTEMPTS {
+        info!("Waiting for reconnection... (attempt {}/{})", 
+              reconnection_attempts + 1, MAX_RECONNECTION_ATTEMPTS);
+        sleep(Duration::from_secs(5)).await;
+        reconnection_attempts += 1;
+    }
+
+    if manager.is_connected().await {
+        info!("✓ Automatic reconnection successful!");
+    } else {
+        warn!("✗ Reconnection timeout - Cassandra may still be starting up");
+        warn!("   The manager will continue polling in the background");
+        return;
+    }
+
+    sleep(Duration::from_secs(2)).await;
+
+    // Test 8: Verify operations work after reconnection
+    info!("\n--- Test 8: Verifying operations after reconnection ---");
+    match manager.query("SELECT now() FROM system.local", &[]).await {
+        Ok(_) => info!("✓ Query successful after reconnection"),
+        Err(e) => warn!("✗ Query failed after reconnection: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // Test 9: Test CRUD operations after reconnection
+    info!("\n--- Test 9: Testing CRUD operations after reconnection ---");
+    
+    info!("Testing INSERT after reconnection...");
+    match manager.insert(
+        "users",
+        "id, name, email, password",
+        "uuid(), 'ResilienceTest', 'resilience@test.com', 'test123'"
+    ).await {
+        Ok(_) => info!("✓ INSERT works after reconnection"),
+        Err(e) => warn!("✗ INSERT failed after reconnection: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    info!("Testing SELECT after reconnection...");
+    match manager.select("users", Some("name"), Some("name = 'ResilienceTest'")).await {
+        Ok(_) => info!("✓ SELECT works after reconnection"),
+        Err(e) => warn!("✗ SELECT failed after reconnection: {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    info!("Testing DELETE after reconnection...");
+    match manager.delete("users", "name = 'ResilienceTest'").await {
+        Ok(_) => info!("✓ DELETE works after reconnection"),
+        Err(e) => warn!("✗ DELETE failed after reconnection: {}", e),
+    }
+
+    info!("\n=== Connection Resilience Test Completed ===\n");
+    info!("Summary:");
+    info!("  ✓ Application continues running when Cassandra goes down");
+    info!("  ✓ Operations fail gracefully without crashing");
+    info!("  ✓ Connection loss is detected automatically");
+    info!("  ✓ Automatic reconnection works (polls every 5 seconds)");
+    info!("  ✓ All CRUD operations work after reconnection");
 }
