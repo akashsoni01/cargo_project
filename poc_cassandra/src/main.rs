@@ -1,9 +1,12 @@
 mod cassandra_manager;
+mod user;
 
 use cassandra_manager::CassandraManager;
+use user::User;
 use std::error::Error;
 use log::{info, warn};
 use tokio::time::{sleep, Duration};
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -94,55 +97,59 @@ async fn setup_database(manager: &CassandraManager) {
         Err(e) => warn!("Failed to create users table: {}", e),
     }
 
-    // Insert test data using prepared statements
-    info!("Inserting test data using prepared statements...");
+    // Insert test data using User model
+    info!("Inserting test data using User model...");
     
-    // Insert user 1
-    match manager.insert(
-        "users",
-        "id, name, email, password",
-        "uuid(), 'Alice', 'alice@example.com', 'password1'"
-    ).await {
-        Ok(_) => info!("Inserted user Alice successfully"),
-        Err(e) => warn!("Failed to insert user Alice: {}", e),
+    // Create users using User model
+    let alice = User::new(
+        "Alice".to_string(),
+        "alice@example.com".to_string(),
+        "password1".to_string(),
+    );
+    match manager.create_user(&alice).await {
+        Ok(_) => info!("✓ Created user: {} ({})", alice.name, alice.email),
+        Err(e) => warn!("✗ Failed to create user Alice: {}", e),
     }
 
-    // Insert user 2
-    match manager.insert(
-        "users",
-        "id, name, email, password",
-        "uuid(), 'Bob', 'bob@example.com', 'password2'"
-    ).await {
-        Ok(_) => info!("Inserted user Bob successfully"),
-        Err(e) => warn!("Failed to insert user Bob: {}", e),
+    let bob = User::new(
+        "Bob".to_string(),
+        "bob@example.com".to_string(),
+        "password2".to_string(),
+    );
+    match manager.create_user(&bob).await {
+        Ok(_) => info!("✓ Created user: {} ({})", bob.name, bob.email),
+        Err(e) => warn!("✗ Failed to create user Bob: {}", e),
     }
 
-    // Insert user 3
-    match manager.insert(
-        "users",
-        "id, name, email, password",
-        "uuid(), 'Charlie', 'charlie@example.com', 'password3'"
-    ).await {
-        Ok(_) => info!("Inserted user Charlie successfully"),
-        Err(e) => warn!("Failed to insert user Charlie: {}", e),
+    let charlie = User::new(
+        "Charlie".to_string(),
+        "charlie@example.com".to_string(),
+        "password3".to_string(),
+    );
+    match manager.create_user(&charlie).await {
+        Ok(_) => info!("✓ Created user: {} ({})", charlie.name, charlie.email),
+        Err(e) => warn!("✗ Failed to create user Charlie: {}", e),
     }
 
-    // Select all users using prepared statement
-    info!("Selecting all users using prepared statement...");
-    match manager.select("users", None, None).await {
-        Ok(_result) => {
-            info!("Query executed successfully - all users selected");
+    // Select all users using User model
+    info!("Selecting all users using User model...");
+    match manager.get_all_users().await {
+        Ok(_users) => {
+            info!("✓ Retrieved all users successfully");
         }
-        Err(e) => warn!("Failed to select users: {}", e),
+        Err(e) => warn!("✗ Failed to get all users: {}", e),
     }
 
-    // Select specific user using prepared statement with WHERE clause
-    info!("Selecting user Alice using prepared statement...");
-    match manager.select("users", Some("id, name, email"), Some("name = 'Alice'")).await {
-        Ok(_result) => {
-            info!("Query executed successfully - user Alice selected");
+    // Select specific user using User model
+    info!("Selecting user Alice using User model...");
+    match manager.get_user_by_email("alice@example.com").await {
+        Ok(Some(_user)) => {
+            info!("✓ Retrieved user Alice successfully");
         }
-        Err(e) => warn!("Failed to select user Alice: {}", e),
+        Ok(None) => {
+            info!("User Alice not found");
+        }
+        Err(e) => warn!("✗ Failed to get user Alice: {}", e),
     }
 
     info!("Database setup completed!");
@@ -175,14 +182,19 @@ async fn run_crud_example(manager: &CassandraManager) {
 
     // ========== CREATE (Insert) ==========
     info!("--- CREATE Operation ---");
-    info!("Inserting a new user 'David'...");
+    info!("Creating a new user 'David' using User model...");
     
-    match manager.insert(
-        "users",
-        "id, name, email, password",
-        "uuid(), 'David', 'david@example.com', 'password4'"
-    ).await {
-        Ok(_) => info!("✓ CREATE: User David inserted successfully"),
+    let david = User::new(
+        "David".to_string(),
+        "david@example.com".to_string(),
+        "password4".to_string(),
+    );
+    
+    match manager.create_user(&david).await {
+        Ok(_) => {
+            info!("✓ CREATE: User {} ({}) created successfully", david.name, david.email);
+            info!("  User ID: {}", david.id);
+        }
         Err(e) => warn!("✗ CREATE failed: {}", e),
     }
 
@@ -192,34 +204,55 @@ async fn run_crud_example(manager: &CassandraManager) {
     info!("\n--- READ Operation ---");
     
     // Read all users
-    info!("Reading all users...");
-    match manager.select("users", None, None).await {
-        Ok(_) => info!("✓ READ: All users retrieved successfully"),
+    info!("Reading all users using User model...");
+    match manager.get_all_users().await {
+        Ok(users) => {
+            info!("✓ READ: Retrieved {} users successfully", users.len());
+        }
         Err(e) => warn!("✗ READ failed (all users): {}", e),
     }
 
     sleep(Duration::from_secs(1)).await;
 
-    // Read specific user
-    info!("Reading user David...");
-    match manager.select("users", Some("id, name, email"), Some("name = 'David'")).await {
-        Ok(_) => info!("✓ READ: User David retrieved successfully"),
-        Err(e) => warn!("✗ READ failed (user David): {}", e),
+    // Read specific user by ID
+    info!("Reading user David by ID using User model...");
+    match manager.get_user_by_id(david.id).await {
+        Ok(Some(user)) => {
+            info!("✓ READ: User retrieved successfully");
+            info!("  Name: {}, Email: {}", user.name, user.email);
+        }
+        Ok(None) => {
+            info!("User not found");
+        }
+        Err(e) => warn!("✗ READ failed (user by ID): {}", e),
+    }
+
+    sleep(Duration::from_secs(1)).await;
+
+    // Read specific user by email
+    info!("Reading user David by email using User model...");
+    match manager.get_user_by_email("david@example.com").await {
+        Ok(Some(user)) => {
+            info!("✓ READ: User retrieved successfully");
+            info!("  Name: {}, Email: {}", user.name, user.email);
+        }
+        Ok(None) => {
+            info!("User not found");
+        }
+        Err(e) => warn!("✗ READ failed (user by email): {}", e),
     }
 
     sleep(Duration::from_secs(1)).await;
 
     // ========== UPDATE ==========
     info!("\n--- UPDATE Operation ---");
-    info!("Updating David's email...");
+    info!("Updating David's email using User model...");
     
-    // Note: In Cassandra, UPDATE requires the PRIMARY KEY in WHERE clause
-    // We'll update by name (assuming name is unique for this example)
-    // In production, you'd use the actual UUID
-    match manager.update(
-        "users",
-        "email = 'david.updated@example.com'",
-        "name = 'David'"
+    match manager.update_user(
+        david.id,
+        None, // Don't update name
+        Some("david.updated@example.com"), // Update email
+        None, // Don't update password
     ).await {
         Ok(_) => {
             info!("✓ UPDATE: David's email updated successfully");
@@ -227,8 +260,12 @@ async fn run_crud_example(manager: &CassandraManager) {
             // Verify the update
             sleep(Duration::from_secs(1)).await;
             info!("Verifying update by reading David again...");
-            match manager.select("users", Some("name, email"), Some("name = 'David'")).await {
-                Ok(_) => info!("✓ UPDATE verified: David's new email retrieved"),
+            match manager.get_user_by_id(david.id).await {
+                Ok(Some(user)) => {
+                    info!("✓ UPDATE verified: User retrieved");
+                    info!("  Updated email: {}", user.email);
+                }
+                Ok(None) => warn!("✗ UPDATE verification: User not found"),
                 Err(e) => warn!("✗ UPDATE verification failed: {}", e),
             }
         }
@@ -239,17 +276,18 @@ async fn run_crud_example(manager: &CassandraManager) {
 
     // ========== DELETE ==========
     info!("\n--- DELETE Operation ---");
-    info!("Deleting user David...");
+    info!("Deleting user David using User model...");
     
-    match manager.delete("users", "name = 'David'").await {
+    match manager.delete_user(david.id).await {
         Ok(_) => {
             info!("✓ DELETE: User David deleted successfully");
             
             // Verify the deletion
             sleep(Duration::from_secs(1)).await;
             info!("Verifying deletion by trying to read David...");
-            match manager.select("users", Some("name"), Some("name = 'David'")).await {
-                Ok(_) => info!("✓ DELETE verified: David not found (as expected)"),
+            match manager.get_user_by_id(david.id).await {
+                Ok(Some(_)) => warn!("✗ DELETE verification: User still exists"),
+                Ok(None) => info!("✓ DELETE verified: User not found (as expected)"),
                 Err(e) => warn!("✗ DELETE verification query failed: {}", e),
             }
         }
@@ -260,9 +298,11 @@ async fn run_crud_example(manager: &CassandraManager) {
 
     // ========== Final READ to show remaining users ==========
     info!("\n--- Final READ Operation ---");
-    info!("Reading all remaining users...");
-    match manager.select("users", Some("name, email"), None).await {
-        Ok(_) => info!("✓ Final READ: Remaining users retrieved successfully"),
+    info!("Reading all remaining users using User model...");
+    match manager.get_all_users().await {
+        Ok(users) => {
+            info!("✓ Final READ: Retrieved {} remaining users successfully", users.len());
+        }
         Err(e) => warn!("✗ Final READ failed: {}", e),
     }
 

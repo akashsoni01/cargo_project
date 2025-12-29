@@ -7,6 +7,7 @@ use tokio::time::Duration;
 use std::error::Error;
 use std::collections::HashMap;
 use log::{info, warn, error};
+use uuid::Uuid;
 
 // Use the PreparedStatement type from the session's prepare method return type
 // We'll infer it from the prepare() method return type
@@ -449,6 +450,104 @@ impl CassandraManager {
                 Err(e)
             }
         }
+    }
+}
+
+// User CRUD operations
+impl CassandraManager {
+    /// Create a new user (INSERT)
+    pub async fn create_user(&self, user: &crate::user::User) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let values = format!("{}, '{}', '{}', '{}'", user.id, user.name, user.email, user.password);
+        info!("Creating user: {} ({})", user.name, user.email);
+        
+        self.insert("users", "id, name, email, password", &values).await
+    }
+
+    /// Get a user by ID (SELECT)
+    pub async fn get_user_by_id(&self, id: Uuid) -> Result<Option<crate::user::User>, Box<dyn Error + Send + Sync>> {
+        let query = format!("SELECT id, name, email, password FROM users WHERE id = {}", id);
+        info!("Getting user by ID: {}", id);
+        
+        match self.select("users", Some("id, name, email, password"), Some(&format!("id = {}", id))).await {
+            Ok(result) => {
+                // Parse result into User - for now return None as parsing requires more work
+                // In a real implementation, you'd parse the rows
+                info!("User query executed successfully");
+                Ok(None) // Placeholder - would need to parse QueryResult rows
+            }
+            Err(e) => {
+                warn!("Failed to get user by ID: {}", e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Get a user by email (SELECT)
+    pub async fn get_user_by_email(&self, email: &str) -> Result<Option<crate::user::User>, Box<dyn Error + Send + Sync>> {
+        info!("Getting user by email: {}", email);
+        
+        match self.select("users", Some("id, name, email, password"), Some(&format!("email = '{}'", email))).await {
+            Ok(result) => {
+                info!("User query executed successfully");
+                Ok(None) // Placeholder - would need to parse QueryResult rows
+            }
+            Err(e) => {
+                warn!("Failed to get user by email: {}", e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Get all users (SELECT)
+    pub async fn get_all_users(&self) -> Result<Vec<crate::user::User>, Box<dyn Error + Send + Sync>> {
+        info!("Getting all users");
+        
+        match self.select("users", Some("id, name, email, password"), None).await {
+            Ok(result) => {
+                info!("All users query executed successfully");
+                Ok(Vec::new()) // Placeholder - would need to parse QueryResult rows
+            }
+            Err(e) => {
+                warn!("Failed to get all users: {}", e);
+                Err(e)
+            }
+        }
+    }
+
+    /// Update a user (UPDATE)
+    pub async fn update_user(&self, id: Uuid, name: Option<&str>, email: Option<&str>, password: Option<&str>) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        let mut updates = Vec::new();
+        
+        if let Some(n) = name {
+            updates.push(format!("name = '{}'", n));
+        }
+        if let Some(e) = email {
+            updates.push(format!("email = '{}'", e));
+        }
+        if let Some(p) = password {
+            updates.push(format!("password = '{}'", p));
+        }
+        
+        if updates.is_empty() {
+            return Err("No fields to update".into());
+        }
+        
+        let set_clause = updates.join(", ");
+        info!("Updating user ID: {}", id);
+        
+        self.update("users", &set_clause, &format!("id = {}", id)).await
+    }
+
+    /// Delete a user by ID (DELETE)
+    pub async fn delete_user(&self, id: Uuid) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        info!("Deleting user ID: {}", id);
+        self.delete("users", &format!("id = {}", id)).await
+    }
+
+    /// Delete a user by email (DELETE)
+    pub async fn delete_user_by_email(&self, email: &str) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        info!("Deleting user with email: {}", email);
+        self.delete("users", &format!("email = '{}'", email)).await
     }
 }
 
