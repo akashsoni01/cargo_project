@@ -1,12 +1,16 @@
 mod cassandra_manager;
 mod user;
+mod product;
+mod user_repository;
+mod product_repository;
 
-use cassandra_manager::CassandraManager;
+use user_repository::UserRepository;
+use product_repository::ProductRepository;
 use user::User;
+use product::Product;
 use std::error::Error;
 use log::{info, warn};
 use tokio::time::{sleep, Duration};
-use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -21,44 +25,180 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     info!("Starting application...");
+    info!("==========================================");
+    info!("Cassandra POC - Multi-Repository Demo");
+    info!("==========================================\n");
 
-    // Create Cassandra manager - this will NOT fail even if Cassandra is down
-    let manager = CassandraManager::new(
-        "127.0.0.1:9042".to_string(),
-        Some("my_keyspace".to_string()),
-    );
+    // Create repositories with different keyspaces
+    let user_repo = UserRepository::new("127.0.0.1:9042".to_string());
+    let product_repo = ProductRepository::new("127.0.0.1:9042".to_string());
 
-    info!("CassandraManager initialized. Server is running even if DB is unavailable.");
-    info!("The manager will poll for connection every 5 seconds.");
+    info!("Repositories initialized:");
+    info!("  - UserRepository: uses 'user_keyspace'");
+    info!("  - ProductRepository: uses 'product_keyspace'");
+    info!("Server is running even if DB is unavailable.");
+    info!("The managers will poll for connection every 5 seconds.\n");
 
     // Wait a bit for initial connection attempt
-    sleep(Duration::from_secs(2)).await;
+    sleep(Duration::from_secs(3)).await;
 
-    // Try to set up the keyspace and table when connected
-    setup_database(&manager).await;
+    // Initialize repositories (create keyspaces and tables)
+    info!("=== Initializing Repositories ===");
+    match user_repo.initialize().await {
+        Ok(_) => info!("✓ UserRepository initialized"),
+        Err(e) => warn!("✗ UserRepository initialization failed: {}", e),
+    }
+
+    match product_repo.initialize().await {
+        Ok(_) => info!("✓ ProductRepository initialized"),
+        Err(e) => warn!("✗ ProductRepository initialization failed: {}", e),
+    }
+    info!("");
+
+    // Run CRUD examples for both repositories
+    info!("=== Running User Repository CRUD Examples ===");
+    run_user_crud_example(&user_repo).await;
+    info!("");
+
+    info!("=== Running Product Repository CRUD Examples ===");
+    run_product_crud_example(&product_repo).await;
+    info!("");
 
     // Keep the application running
-    // In a real application, you would start your web server here
     info!("Application is running. Press Ctrl+C to stop.");
+    info!("Repositories are ready to handle requests.\n");
     
     // Example: Keep running and periodically check connection status
     loop {
         sleep(Duration::from_secs(10)).await;
         
-        if manager.is_connected().await {
-            info!("Cassandra is connected!");
-            
-            // Example query
-            match manager.query("SELECT now() FROM system.local", &[]).await {
-                Ok(_) => info!("Query executed successfully"),
-                Err(e) => warn!("Query failed: {}", e),
-            }
+        let user_connected = user_repo.manager().is_connected().await;
+        let product_connected = product_repo.manager().is_connected().await;
+        
+        if user_connected && product_connected {
+            info!("Both repositories are connected to Cassandra!");
         } else {
-            info!("Cassandra is not connected yet. Waiting for connection...");
+            info!("Waiting for connections... (User: {}, Product: {})", 
+                if user_connected { "✓" } else { "✗" },
+                if product_connected { "✓" } else { "✗" });
         }
     }
 }
 
+/// Run CRUD examples for User Repository
+async fn run_user_crud_example(repo: &UserRepository) {
+    info!("\n--- CREATE Operation ---");
+    let user1 = User::new(
+        "John Doe".to_string(),
+        "john@example.com".to_string(),
+        "password123".to_string(),
+    );
+    match repo.create(&user1).await {
+        Ok(_) => info!("✓ User '{}' created", user1.name),
+        Err(e) => warn!("✗ Failed to create user: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- READ Operation ---");
+    match repo.get_by_id(user1.id).await {
+        Ok(Some(u)) => info!("✓ Retrieved user: {} ({})", u.name, u.email),
+        Ok(None) => info!("User not found"),
+        Err(e) => warn!("✗ Failed to get user: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    match repo.get_by_email("john@example.com").await {
+        Ok(Some(u)) => info!("✓ Retrieved user by email: {}", u.name),
+        Ok(None) => info!("User not found"),
+        Err(e) => warn!("✗ Failed to get user: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    match repo.get_all().await {
+        Ok(users) => info!("✓ Retrieved {} users", users.len()),
+        Err(e) => warn!("✗ Failed to get all users: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- UPDATE Operation ---");
+    match repo.update(user1.id, None, Some("john.updated@example.com"), None).await {
+        Ok(_) => info!("✓ User updated successfully"),
+        Err(e) => warn!("✗ Failed to update user: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- DELETE Operation ---");
+    match repo.delete(user1.id).await {
+        Ok(_) => info!("✓ User deleted successfully"),
+        Err(e) => warn!("✗ Failed to delete user: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+}
+
+/// Run CRUD examples for Product Repository
+async fn run_product_crud_example(repo: &ProductRepository) {
+    info!("\n--- CREATE Operation ---");
+    let product1 = Product::new(
+        "Laptop".to_string(),
+        "High-performance laptop for developers".to_string(),
+        1299.99,
+        10,
+    );
+    match repo.create(&product1).await {
+        Ok(_) => info!("✓ Product '{}' created (${})", product1.name, product1.price),
+        Err(e) => warn!("✗ Failed to create product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    let product2 = Product::new(
+        "Mouse".to_string(),
+        "Wireless ergonomic mouse".to_string(),
+        29.99,
+        50,
+    );
+    match repo.create(&product2).await {
+        Ok(_) => info!("✓ Product '{}' created (${})", product2.name, product2.price),
+        Err(e) => warn!("✗ Failed to create product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- READ Operation ---");
+    match repo.get_by_id(product1.id).await {
+        Ok(Some(p)) => info!("✓ Retrieved product: {} (${})", p.name, p.price),
+        Ok(None) => info!("Product not found"),
+        Err(e) => warn!("✗ Failed to get product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    match repo.get_by_name("Laptop").await {
+        Ok(Some(p)) => info!("✓ Retrieved product by name: {} (${})", p.name, p.price),
+        Ok(None) => info!("Product not found"),
+        Err(e) => warn!("✗ Failed to get product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    match repo.get_all().await {
+        Ok(products) => info!("✓ Retrieved {} products", products.len()),
+        Err(e) => warn!("✗ Failed to get all products: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- UPDATE Operation ---");
+    match repo.update(product1.id, None, None, Some(1199.99), Some(15)).await {
+        Ok(_) => info!("✓ Product updated successfully"),
+        Err(e) => warn!("✗ Failed to update product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+
+    info!("\n--- DELETE Operation ---");
+    match repo.delete(product1.id).await {
+        Ok(_) => info!("✓ Product deleted successfully"),
+        Err(e) => warn!("✗ Failed to delete product: {}", e),
+    }
+    sleep(Duration::from_secs(1)).await;
+}
+
+#[allow(dead_code)]
 async fn setup_database(manager: &CassandraManager) {
     // Wait for connection with timeout
     let mut attempts = 0;
