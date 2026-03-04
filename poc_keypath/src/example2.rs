@@ -1,0 +1,69 @@
+use std::sync::Arc;
+use key_paths_derive::Kp;
+
+#[derive(Debug, Kp)]
+struct SomeComplexStruct {
+    scsf: Option<SomeOtherStruct>,
+    scfs2: Arc<std::sync::RwLock<SomeOtherStruct>>,
+}
+
+#[derive(Debug, Kp)]
+struct SomeOtherStruct {
+    sosf: Option<OneMoreStruct>,
+}
+
+#[derive(Debug, Kp)]
+enum SomeEnum {
+    A(String),
+    B(Box<DarkStruct>),
+}
+
+#[derive(Debug, Kp)]
+struct OneMoreStruct {
+    omsf: Option<String>,
+    omse: Option<SomeEnum>,
+}
+
+#[derive(Debug, Kp)]
+struct DarkStruct {
+    dsf: Option<String>,
+}
+
+impl SomeComplexStruct {
+    fn new() -> Self {
+        Self {
+            scsf: Some(SomeOtherStruct {
+                sosf: Some(OneMoreStruct {
+                    omsf: Some(String::from("no value for now")),
+                    omse: Some(SomeEnum::B(Box::new(DarkStruct {
+                        dsf: Some(String::from("dark field")),
+                    }))),
+                }),
+            }),
+            scfs2: Arc::new(std::sync::RwLock::new(SomeOtherStruct {
+                sosf: Some(OneMoreStruct {
+                    omsf: Some(String::from("no value for now")),
+                    omse: Some(SomeEnum::B(Box::new(DarkStruct {
+                        dsf: Some(String::from("dark field")),
+                    }))),
+                }),
+            })),
+        }
+    }
+}
+fn main() {
+    let mut instance = SomeComplexStruct::new();
+
+    SomeComplexStruct::scsf()
+        .then(SomeOtherStruct::sosf())
+        .then(OneMoreStruct::omse())
+        .then(SomeEnum::b())
+        .then(DarkStruct::dsf())
+        .get_mut(&mut instance).map(|x| {
+        *x = String::from("🖖🏿🖖🏿🖖🏿🖖🏿");
+    });
+
+    println!("instance = {:?}", instance.scsf.unwrap().sosf.unwrap().omse.unwrap());
+    // output - instance = B(DarkStruct { dsf: Some("🖖🏿🖖🏿🖖🏿🖖🏿") })
+}
+C

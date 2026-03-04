@@ -1,0 +1,8 @@
+[package]
+name = "poc_keypath"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+key-paths-derive = "2.0.8"
+rust-key-paths = "2.0.8"
