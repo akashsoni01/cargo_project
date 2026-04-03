@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use key_paths_derive::Kp;
+use rust_key_paths::KpTrait;
 
 #[derive(Debug, Kp)]
 struct SomeComplexStruct {
@@ -27,7 +28,7 @@ enum SomeEnum {
 
 #[derive(Debug, Kp)]
 struct DarkStruct {
-    dsf: Box<Option<String>>,
+    dsf: Option<Box<String>>,
 }
 
 impl SomeComplexStruct {
