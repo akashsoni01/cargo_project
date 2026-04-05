@@ -1,318 +1,378 @@
-use serde::{Serialize, Deserialize};
+use key_paths_derive::Kp;
+use rust_key_paths::KpDynamic;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BigPayload {
+    pub enterprise: Option<Enterprise>,
+    // Add other top-level fields if needed
+}
+
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Enterprise {
-    pub name: String,
-    pub founded: u16,
-    pub is_active: bool,
+    pub name: Option<String>,
+    pub founded: Option<u16>,
+    pub is_active: Option<bool>,
     pub tax_id: Option<String>,
-    pub headquarters: Headquarters,
-    pub metadata: Metadata,
+    pub headquarters: Option<Headquarters>,
+    pub metadata: Option<Metadata>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Headquarters {
-    pub address: Address,
-    pub facilities: Facilities,
-    pub logistics: Logistics,
+    pub address: Option<Address>,
+    pub facilities: Option<Facilities>,
+    pub logistics: Option<Logistics>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Address {
-    pub street: String,
-    pub city: String,
-    pub zip_code: String,
-    pub country: String,
-    pub timezone: String,
-    pub is_main_office: bool,
-    pub contact_phone: String, // Empty string allowed
+    pub street: Option<String>,
+    pub city: Option<String>,
+    pub zip_code: Option<String>,
+    pub country: Option<String>,
+    pub timezone: Option<String>,
+    pub is_main_office: Option<bool>,
+    pub contact_phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Facilities {
-    pub warehouses: Vec<Warehouse>,
+    pub warehouses: Option<Vec<Warehouse>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Warehouse {
-    pub id: String,
-    pub capacity: u32,
-    pub is_automated: bool,
-    pub manager: Manager,
-    pub inventory: Inventory,
+    pub id: Option<String>,
+    pub capacity: Option<u32>,
+    pub is_automated: Option<bool>,
+    pub manager: Option<Manager>,
+    pub inventory: Option<Inventory>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Manager {
-    pub name: String,
-    pub employee_id: String,
-    pub contacts: Contacts,
-    pub permissions: Vec<String>,
-    pub active_since: String, // Using String for date; could use chrono::NaiveDate
+    pub name: Option<String>,
+    pub employee_id: Option<String>,
+    pub contacts: Option<Contacts>,
+    pub permissions: Option<Vec<String>>,
+    pub active_since: Option<String>,
     pub last_promotion: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Contacts {
-    pub email: String,
+    pub email: Option<String>,
     pub phone: Option<String>,
-    pub emergency_contact: EmergencyContact,
+    pub emergency_contact: Option<EmergencyContact>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EmergencyContact {
-    pub name: String, // Empty string allowed
-    pub relation: String,
-    pub phone: String,
+    pub name: Option<String>,
+    pub relation: Option<String>,
+    pub phone: Option<Box<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Inventory {
-    pub categories: Categories,
-    pub last_audit: String,
-    pub is_audited: bool,
+    pub categories: Option<Categories>,
+    pub last_audit: Option<String>,
+    pub is_audited: Option<bool>,
     pub audit_score: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Categories {
-    pub electronics: ElectronicsCategory,
-    pub clothing: ClothingCategory,
+    pub electronics: Option<ElectronicsCategory>,
+    pub clothing: Option<ClothingCategory>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectronicsCategory {
-    pub total_units: u32,
-    pub last_restocked: String,
-    pub items: Vec<ElectronicItem>,
-    pub seasonal_demand: HashMap<String, Option<f64>>, // Dictionary with nullable values
+    pub total_units: Option<u32>,
+    pub last_restocked: Option<String>,
+    pub items: Option<Vec<ElectronicItem>>,
+    pub seasonal_demand: Option<HashMap<String, Option<f64>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectronicItem {
-    pub sku: String,
-    pub price: f64,
-    pub in_stock: bool,
-    pub details: ItemDetails,
+    pub sku: Option<String>,
+    pub price: Option<f64>,
+    pub in_stock: Option<bool>,
+    pub details: Option<ItemDetails>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ItemDetails {
-    pub specs: HashMap<String, String>, // Dictionary for specs
-    pub reviews: Vec<Review>,
+    pub specs: Option<HashMap<String, String>>,
+    pub reviews: Option<Vec<Review>>,
     pub discount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Review {
-    pub rating: u8,
-    pub comment: String,
-    pub verified_purchase: bool,
+    pub rating: Option<u8>,
+    pub comment: Option<String>,
+    pub verified_purchase: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClothingCategory {
-    pub total_units: u32,
-    pub last_restocked: String, // Empty string allowed
-    pub items: Vec<ClothingItem>,
-    pub seasonal_demand: HashMap<String, Option<f64>>, // Empty dict allowed
+    pub total_units: Option<u32>,
+    pub last_restocked: Option<String>,
+    pub items: Option<Vec<ClothingItem>>,
+    pub seasonal_demand: Option<HashMap<String, Option<f64>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClothingItem {
-    // Placeholder - can be expanded
-    pub sku: String,
-    pub size: String,
-    pub color: String,
+    pub sku: Option<String>,
+    pub size: Option<String>,
+    pub color: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Logistics {
-    pub shipping_zones: HashMap<String, ShippingZone>, // Dictionary of zones
-    pub carriers: Vec<Carrier>,
-    pub handling_fee: f64,
+    pub shipping_zones: Option<HashMap<String, ShippingZone>>,
+    pub carriers: Option<Vec<Carrier>>,
+    pub handling_fee: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShippingZone {
-    pub code: String,
-    pub rates: HashMap<String, Option<f64>>, // Dictionary with nullable values
-    pub estimated_days: HashMap<String, Vec<u8>>, // Dictionary with arrays
-    pub restrictions: Vec<String>, // Empty array allowed
+    pub code: Option<String>,
+    pub rates: Option<HashMap<String, Option<f64>>>,
+    pub estimated_days: Option<HashMap<String, Vec<u8>>>,
+    pub restrictions: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Carrier {
-    pub name: String, // Empty string allowed
-    pub is_preferred: bool,
+    pub name: Option<String>,
+    pub is_preferred: Option<bool>,
     pub tracking_url_template: Option<String>,
-    pub account_number: String,
+    pub account_number: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
-    pub version: String,
-    pub last_deployed: String,
-    pub environment: String,
-    pub config: Config,
-    pub tags: Vec<String>,
-    pub is_test_mode: bool,
-    pub notes: String, // Empty string allowed
+    pub version: Option<String>,
+    pub last_deployed: Option<String>,
+    pub environment: Option<String>,
+    pub config: Option<Config>,
+    pub tags: Option<Vec<String>>,
+    pub is_test_mode: Option<bool>,
+    pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    pub features: HashMap<String, Option<bool>>, // Dictionary with nullable booleans
-    pub limits: HashMap<String, serde_json::Value>, // Mixed types: int, float, bool
-    pub placeholders: HashMap<String, String>, // Empty dict allowed
+    pub features: Option<HashMap<String, Option<bool>>>,
+    pub limits: Option<HashMap<String, serde_json::Value>>,
+    pub placeholders: Option<HashMap<String, String>>,
 }
 
-// Optional: Implement Default for empty values
-impl Default for ClothingCategory {
-    fn default() -> Self {
-        Self {
-            total_units: 0,
-            last_restocked: String::new(),
-            items: Vec::new(),
-            seasonal_demand: HashMap::new(),
-        }
+// Helper methods for ergonomic access
+impl Enterprise {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    // Example of safe field access
+    pub fn get_name(&self) -> &str {
+        self.name.as_deref().unwrap_or("Unknown")
+    }
+
+    pub fn get_founded(&self) -> u16 {
+        self.founded.unwrap_or(0)
     }
 }
 
-impl Default for EmergencyContact {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            relation: String::new(),
-            phone: String::new(),
-        }
+impl Warehouse {
+    pub fn get_capacity(&self) -> u32 {
+        self.capacity.unwrap_or(0)
     }
 }
 
-// Example usage with serde_json
+impl ElectronicItem {
+    pub fn get_price(&self) -> f64 {
+        self.price.unwrap_or(0.0)
+    }
+
+    pub fn is_in_stock(&self) -> bool {
+        self.in_stock.unwrap_or(false)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_key_paths::{AccessorTrait, HofTrait, KpTrait};
     use serde_json;
 
     #[test]
-    fn test_deserialize_example() {
+    fn test_nested_option_access_patterns() {
         let json_data = r#"
         {
-          "enterprise": {
-            "name": "GlobalMart",
-            "founded": 2001,
-            "isActive": true,
-            "taxId": null,
-            "headquarters": {
-              "address": {
-                "street": "100 Commerce Drive",
-                "city": "New York",
-                "zipCode": "10001",
-                "country": "USA",
-                "timezone": "EST",
-                "isMainOffice": true,
-                "contactPhone": ""
-              },
-              "facilities": {
-                "warehouses": []
-              },
-              "logistics": {
-                "shippingZones": {},
-                "carriers": [],
-                "handlingFee": 0
-              }
-            },
-            "metadata": {
-              "version": "2.1.0",
-              "lastDeployed": "2025-03-30T08:00:00Z",
-              "environment": "production",
-              "config": {
-                "features": {},
-                "limits": {},
-                "placeholders": {}
-              },
-              "tags": [],
-              "isTestMode": false,
-              "notes": ""
+            "enterprise": {
+                "headquarters": {
+                    "facilities": {
+                        "warehouses": [
+                            {
+                                "id": "TEST-01",
+                                "manager": {
+                                    "contacts": {
+                                        "emergencyContact": {
+                                            "phone": "555-0000"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
             }
-          }
         }"#;
 
-        let root: HashMap<String, Enterprise> = serde_json::from_str(json_data).unwrap();
-        let enterprise = root.get("enterprise").unwrap();
-        
-        assert_eq!(enterprise.name, "GlobalMart");
-        assert_eq!(enterprise.founded, 2001);
-        assert!(enterprise.tax_id.is_none());
-        assert_eq!(enterprise.headquarters.address.contact_phone, "");
+        let root: BigPayload = serde_json::from_str(json_data).unwrap();
+
+        // BigPayload::enterprise()
+        //     .then(Enterprise::headquarters())
+        //     .then(Headquarters::facilities())
+        //     .then(Facilities::warehouses_at(0))
+        //     .then(Warehouse::manager())
+        //     .then(Manager::contacts())
+        //     .then(Contacts::emergency_contact())
+        //     .then(EmergencyContact::phone())
+        //     .get(& root).map( |emergency_phone| {
+        //         assert_eq!(emergency_phone, &"555-0000".to_string());
+        //     });
+            
+        root
+            .enterprise.as_ref()
+            .and_then(|e| e.headquarters.as_ref())
+            .and_then(|h| h.facilities.as_ref())
+            .and_then(|f| f.warehouses.as_ref())
+            .and_then(|w| w.first())
+            .and_then(|w| w.manager.as_ref())
+            .and_then(|m| m.contacts.as_ref())
+            .and_then(|c| c.emergency_contact.as_ref())
+            .and_then(|ec| ec.phone.as_ref())
+            .map(|emergency_phone| {
+                assert_eq!(emergency_phone, &"555-0000".to_string());
+            });
+
+
+
+            // BigPayload -> enterprise -> headquarters
+
+            // op of a fn became in of anothe fn. we can combine or compose thse two to make a chain or pipeline
+            BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone())
+            .get(&root).map(|name| {
+                println!("name = {}", name);
+            });
+
+
+            // kp.get(& instance1);
+            // kp.get(& instance2);
+            // kp.get(& instance3);
+            // kp.get(& instance4);
+            // kp.get(& instance5);
+            // kp.get(& instance5);
+            // let x = to_string(multi_two(add_one(1)));
+
+            // add_one.then(multi_two).then(to_string).get
+
+            // add_one(3);
+            // add_one(5);
+            // add_one(6);
+
+
+             BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::name())
+            .get(&root).map(|name: &String| {
+                println!("name = {}", name);
+            }) ;
+
+
+    }
+}
+
+fn add_one(i: i32) -> i32 {
+    i + 1
+}
+
+fn multi_two(i: i32) -> i32 {
+    i * 2
+}
+
+fn to_string(i: i32) -> String {
+    format!("{}", i)
+}
+
+fn main() {}
+
+
+
+pub struct SomeService {
+    hot_path_to_emergency_contact: KpDynamic<BigPayload, String>
+}
+
+
+
+
+impl SomeService {
+    fn new() -> Self {
+        Self { hot_path_to_emergency_contact:  BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone()).into_dynamic() }
     }
 
-    #[test]
-    fn test_serialize_with_nulls() {
-        let enterprise = Enterprise {
-            name: "TestMart".to_string(),
-            founded: 2020,
-            is_active: true,
-            tax_id: None,
-            headquarters: Headquarters {
-                address: Address {
-                    street: "123 Test St".to_string(),
-                    city: "Test City".to_string(),
-                    zip_code: "12345".to_string(),
-                    country: "USA".to_string(),
-                    timezone: "PST".to_string(),
-                    is_main_office: true,
-                    contact_phone: String::new(),
-                },
-                facilities: Facilities {
-                    warehouses: vec![],
-                },
-                logistics: Logistics {
-                    shipping_zones: HashMap::new(),
-                    carriers: vec![],
-                    handling_fee: 0.0,
-                },
-            },
-            metadata: Metadata {
-                version: "1.0".to_string(),
-                last_deployed: "2025-04-03T00:00:00Z".to_string(),
-                environment: "dev".to_string(),
-                config: Config {
-                    features: HashMap::new(),
-                    limits: HashMap::new(),
-                    placeholders: HashMap::new(),
-                },
-                tags: vec![],
-                is_test_mode: true,
-                notes: String::new(),
-            },
-        };
-
-        let serialized = serde_json::to_string_pretty(&enterprise).unwrap();
-        assert!(serialized.contains("null"));
-        assert!(serialized.contains("\"\""));
-    }
+    // fn use_hotpaths(&self) {
+    //     self.hot_path_to_emergency_contact.get(todo!());
+    //     self.hot_path_to_emergency_contact.get(todo!());
+    //     self.hot_path_to_emergency_contact.get(todo!());
+    //     self.hot_path_to_emergency_contact.get(todo!());
+    // }
 }
