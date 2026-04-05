@@ -1,14 +1,40 @@
+use key_paths_derive::Kp;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use rust_key_paths::{KpDynamic, KpTrait, KpType};
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SomeService {
+    hot_path_to_emergency_contact: KpDynamic<BigPayload, String>
+}
+
+impl SomeService {
+    fn new() -> Self {
+        Self { hot_path_to_emergency_contact:  BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone()).into_dynamic() }
+    }
+
+    fn use_hotpaths(&self) {
+        self.hot_path_to_emergency_contact.get(todo!());
+        self.hot_path_to_emergency_contact.get(todo!());
+        self.hot_path_to_emergency_contact.get(todo!());
+        self.hot_path_to_emergency_contact.get(todo!());
+    }
+}
+
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BigPayload {
     pub enterprise: Option<Enterprise>,
     // Add other top-level fields if needed
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Enterprise {
     pub name: Option<String>,
@@ -19,7 +45,7 @@ pub struct Enterprise {
     pub metadata: Option<Metadata>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Headquarters {
     pub address: Option<Address>,
@@ -27,7 +53,7 @@ pub struct Headquarters {
     pub logistics: Option<Logistics>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Address {
     pub street: Option<String>,
@@ -39,13 +65,13 @@ pub struct Address {
     pub contact_phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Facilities {
     pub warehouses: Option<Vec<Warehouse>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Warehouse {
     pub id: Option<String>,
@@ -55,7 +81,7 @@ pub struct Warehouse {
     pub inventory: Option<Inventory>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Manager {
     pub name: Option<String>,
@@ -66,7 +92,7 @@ pub struct Manager {
     pub last_promotion: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Contacts {
     pub email: Option<String>,
@@ -74,7 +100,7 @@ pub struct Contacts {
     pub emergency_contact: Option<EmergencyContact>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EmergencyContact {
     pub name: Option<String>,
@@ -82,7 +108,7 @@ pub struct EmergencyContact {
     pub phone: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Inventory {
     pub categories: Option<Categories>,
@@ -91,14 +117,14 @@ pub struct Inventory {
     pub audit_score: Option<f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Categories {
     pub electronics: Option<ElectronicsCategory>,
     pub clothing: Option<ClothingCategory>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectronicsCategory {
     pub total_units: Option<u32>,
@@ -107,7 +133,7 @@ pub struct ElectronicsCategory {
     pub seasonal_demand: Option<HashMap<String, Option<f64>>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectronicItem {
     pub sku: Option<String>,
@@ -116,7 +142,7 @@ pub struct ElectronicItem {
     pub details: Option<ItemDetails>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ItemDetails {
     pub specs: Option<HashMap<String, String>>,
@@ -124,7 +150,7 @@ pub struct ItemDetails {
     pub discount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Review {
     pub rating: Option<u8>,
@@ -132,7 +158,7 @@ pub struct Review {
     pub verified_purchase: Option<bool>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClothingCategory {
     pub total_units: Option<u32>,
@@ -141,7 +167,7 @@ pub struct ClothingCategory {
     pub seasonal_demand: Option<HashMap<String, Option<f64>>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClothingItem {
     pub sku: Option<String>,
@@ -149,7 +175,7 @@ pub struct ClothingItem {
     pub color: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Logistics {
     pub shipping_zones: Option<HashMap<String, ShippingZone>>,
@@ -157,7 +183,7 @@ pub struct Logistics {
     pub handling_fee: Option<f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShippingZone {
     pub code: Option<String>,
@@ -166,7 +192,7 @@ pub struct ShippingZone {
     pub restrictions: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Carrier {
     pub name: Option<String>,
@@ -175,7 +201,7 @@ pub struct Carrier {
     pub account_number: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
     pub version: Option<String>,
@@ -187,7 +213,7 @@ pub struct Metadata {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub features: Option<HashMap<String, Option<bool>>>,
@@ -259,20 +285,21 @@ mod tests {
 
         let root: BigPayload = serde_json::from_str(json_data).unwrap();
 
-        // BigPayload::enterprise()
-        //     .then(Enterprise::headquarters())
-        //     .then(Headquarters::facilities())
-        //     .then(Facilities::warehouses_at(0))
-        //     .then(Warehouse::manager())
-        //     .then(Manager::contacts())
-        //     .then(Contacts::emergency_contact())
-        //     .then(EmergencyContact::phone())
-        //     .get(& root).map( |emergency_phone| {
-        //         assert_eq!(emergency_phone, &"555-0000".to_string());
-        //     });
-            
-        root
-            .enterprise.as_ref()
+        BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone())
+            .get(&root)
+            .map(|emergency_phone| {
+                assert_eq!(emergency_phone, &"555-0000".to_string());
+            });
+
+        root.enterprise
+            .as_ref()
             .and_then(|e| e.headquarters.as_ref())
             .and_then(|h| h.facilities.as_ref())
             .and_then(|f| f.warehouses.as_ref())
@@ -284,8 +311,27 @@ mod tests {
             .map(|emergency_phone| {
                 assert_eq!(emergency_phone, &"555-0000".to_string());
             });
-
     }
 }
 
 fn main() {}
+
+fn get_emergency_phone(root: &BigPayload) -> Option<&String> {
+    root.enterprise
+        .as_ref()?
+        .headquarters
+        .as_ref()?
+        .facilities
+        .as_ref()?
+        .warehouses
+        .as_ref()?
+        .first()?
+        .manager
+        .as_ref()?
+        .contacts
+        .as_ref()?
+        .emergency_contact
+        .as_ref()?
+        .phone
+        .as_ref()
+}
