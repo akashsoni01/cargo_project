@@ -320,25 +320,15 @@ mod tests {
             // add_one(6);
 
 
-             let kp = BigPayload::enterprise()
+             BigPayload::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities())
             .then(Facilities::warehouses_at(0))
             .then(Warehouse::manager())
-            .then(Manager::name());
-            println!("size of kp = {:?}", size_of_val(&kp));
-
-            (kp).get(&root).map(|name:&String | {
+            .then(Manager::name())
+            .get(&root).map(|name: &String| {
                 println!("name = {}", name);
             }) ;
-
-            println!("size of kp = {:?}", size_of_val(&kp));
-
-        let kp = BigPayload::enterprise()
-            .then(Enterprise::headquarters())
-            .then(Headquarters::facilities());
-
-    println!("size of kp2 = {:?}", size_of_val(&kp));
 
 
     }
