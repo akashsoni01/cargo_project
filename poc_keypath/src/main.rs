@@ -341,6 +341,11 @@ mod tests {
     println!("size of kp2 = {:?}", size_of_val(&kp));
 
 
+    let service = SomeService::new();
+    println!("size of dynamic kp ======= {:?}", size_of_val(&service.hot_path_to_emergency_contact));
+
+    let result = service.hot_path_to_emergency_contact.get(& root);
+    println!("result from service = {:?}", result);
     }
 }
 

@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-key-paths-derive =  "2.6.0"
-rust-key-paths = "2.9.4"
+key-paths-derive = "2.6.2"
+rust-key-paths = "2.9.8"
+#key-paths-derive =  "2.6.0"
+#rust-key-paths = "2.9.4"
 serde = { version="1.0.0", features=["derive"]}
 serde_json = "1.0"
