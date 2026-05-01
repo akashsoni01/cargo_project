@@ -1,7 +1,7 @@
 use key_paths_derive::Kp;
 use rust_key_paths::KpDynamic;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -10,6 +10,10 @@ pub struct BigPayload {
     // Add other top-level fields if needed
 }
 
+#[derive(Kp, Debug, Clone, Default)]
+pub struct BigPayload2 {
+        pub enterprise: Option<Arc<Enterprise>>,
+}
 #[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Enterprise {
@@ -346,6 +350,9 @@ mod tests {
 
     let result = service.hot_path_to_emergency_contact.get(& root);
     println!("result from service = {:?}", result);
+
+
+    BigPayload2::enterprise()._p
     }
 }
 
