@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-key-paths-derive = "2.6.2"
-rust-key-paths = "2.9.8"
+arc-swap = { version = "1.9.1", features = ["serde"] }
+key-paths-derive = "3.0.1"
+rust-key-paths = { version = "3.0.0", features = ["arc-swap"] }
 #key-paths-derive =  "2.6.0"
 #rust-key-paths = "2.9.4"
 serde = { version="1.0.0", features=["derive"]}

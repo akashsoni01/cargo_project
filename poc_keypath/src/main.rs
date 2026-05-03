@@ -10,9 +10,20 @@ pub struct BigPayload {
     // Add other top-level fields if needed
 }
 
-#[derive(Kp, Debug, Clone, Default)]
+#[derive(Kp, Debug, Default, Serialize, Deserialize)]
 pub struct BigPayload2 {
-        pub enterprise: Option<Arc<Enterprise>>,
+        pub enterprise: Arc<arc_swap::ArcSwap<Enterprise>>,
+}
+
+impl Clone for BigPayload2 {
+    fn clone_from(&mut self, source: &Self) {
+        // *self = source.clone()
+        todo!()
+    }
+    
+    fn clone(&self) -> Self {
+        Self { enterprise: todo!() }
+    }
 }
 #[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -236,7 +247,7 @@ impl ElectronicItem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_key_paths::{AccessorTrait, HofTrait, KpTrait};
+    use rust_key_paths::{AccessorTrait, ChainExt, HofTrait, KpTrait};
     use serde_json;
 
     #[test]
@@ -264,6 +275,7 @@ mod tests {
         }"#;
 
         let root: BigPayload = serde_json::from_str(json_data).unwrap();
+        let mut root2: BigPayload2 = serde_json::from_str(json_data).unwrap();
 
         // BigPayload::enterprise()
         //     .then(Enterprise::headquarters())
@@ -352,7 +364,20 @@ mod tests {
     println!("result from service = {:?}", result);
 
 
-    BigPayload2::enterprise()._p
+    let x = BigPayload2::enterprise().then(Enterprise::headquarters()).then(Headquarters::facilities()).then(Facilities::warehouses_at(0)).then(Warehouse::manager()).then(Manager::contacts()).then(Contacts::emergency_contact()).then(EmergencyContact::phone());
+    println!("size of synckp = {:?} to emergency keypath", size_of_val(&x));
+    if let Some(result) = x.get(& root2) {
+        println!("emergency contact before = {:?}", result);
+    }
+
+    if let Some(result2) = x.get_mut(&mut root2) {
+        *result2 = "911221001000".to_string();
+    }
+
+    if let Some(result) = x.get(& root2) {
+        println!("emergency contact before = {:?}", result);
+    }
+
     }
 }
 
