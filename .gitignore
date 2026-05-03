@@ -18,3 +18,4 @@ poc_sqlx/.env
 jupyter/docs/data/electronics.csv
 *.iml
 *.xml
+.DS_Store
