@@ -12,7 +12,7 @@ pub struct BigPayload {
 
 #[derive(Kp, Debug, Default, Serialize, Deserialize)]
 pub struct BigPayload2 {
-        pub enterprise: Arc<arc_swap::ArcSwap<Enterprise>>,
+        pub enterprise: arc_swap::ArcSwap<Enterprise>,
 }
 
 impl Clone for BigPayload2 {
@@ -22,7 +22,7 @@ impl Clone for BigPayload2 {
     }
     
     fn clone(&self) -> Self {
-        Self { enterprise: todo!() }
+        Self { enterprise: arc_swap::ArcSwap::new(self.enterprise.load_full()) } // shallow cloning
     }
 }
 #[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
