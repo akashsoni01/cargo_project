@@ -1,5 +1,5 @@
 use key_paths_derive::Kp;
-use rust_key_paths::KpDynamic;
+use rust_key_paths::{Kp as RustKp, KpDynamic};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -393,12 +393,56 @@ fn to_string(i: i32) -> String {
     format!("{}", i)
 }
 
-fn main() {}
+fn main() {
+    let test = Test { test: 10 };
+    let keypath = Test::test();
+    let result = keypath.get(&test);
+    println!("result = {:?}", result);
 
+    let messages = Messages::KeypathParameter(keypath);
+    let result = match messages {
+        Messages::KeypathParameter(ref kp) => kp.get(&test),
+    };
 
+    let result = match messages {
+        Messages::KeypathParameter(ref kp) => kp.get(&test),
+    };
+
+    println!("result = {:?}", result);
+
+    let result = keypath.get(&test);
+    println!("result = {:?}", result);
+    // let result = keypath.get(&test);
+    // println!("result = {:?}", result);
+
+}
+
+#[derive(Kp,)]
+struct Test {
+    test: usize,
+}
 
 pub struct SomeService {
     hot_path_to_emergency_contact: KpDynamic<BigPayload, String>
+}
+
+pub enum Messages<'a, G, S>
+where
+    G: Fn(&'a Test) -> Option<&'a usize>,
+    S: Fn(&'a mut Test) -> Option<&'a mut usize>,
+{
+    KeypathParameter(
+        RustKp<
+            Test,
+            usize,
+            &'a Test,
+            &'a usize,
+            &'a mut Test,
+            &'a mut usize,
+            G,
+            S,
+        >,
+    ),
 }
 
 
