@@ -427,7 +427,7 @@ fn main() {
     let result = keypath.get(&test);
     println!("result = {:?}", result);
 
-    let messages = Messages::KeypathParameter(keypath);
+    let messages = Messages::KeypathParameter(Test::test());
     let result = match messages {
         Messages::KeypathParameter(ref kp) => kp.get(&test),
     };
@@ -453,12 +453,8 @@ pub struct SomeService {
     hot_path_to_emergency_contact: KpDynamic<BigPayload, String>,
 }
 
-pub enum Messages<'a, G, S>
-where
-    G: Fn(&'a Test) -> Option<&'a usize>,
-    S: Fn(&'a mut Test) -> Option<&'a mut usize>,
-{
-    KeypathParameter(RustKp<Test, usize, &'a Test, &'a usize, &'a mut Test, &'a mut usize, G, S>),
+pub enum Messages<F> {
+    KeypathParameter(F),
 }
 
 impl SomeService {
