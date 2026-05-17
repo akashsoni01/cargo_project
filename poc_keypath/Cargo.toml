@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 arc-swap = { version = "1.9.1", features = ["serde"] }
 key-paths-derive = "3.0.1"
-rust-key-paths = { version = "3.0.1", features = ["arc-swap"] }
+rust-key-paths = { version = "3.0.2", features = ["arc-swap"] }
 #key-paths-derive =  "2.6.0"
 #rust-key-paths = "2.9.4"
 serde = { version="1.0.0", features=["derive"]}

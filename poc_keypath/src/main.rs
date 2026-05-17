@@ -1,5 +1,5 @@
 use key_paths_derive::Kp;
-use rust_key_paths::{Kp as RustKp, KpDynamic, KpReadable};
+use rust_key_paths::{Kp as RustKp, KpDynamic, Readable};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -413,7 +413,7 @@ fn to_string(i: i32) -> String {
 
 fn test<'p, F>(payload: &'p BigPayload, g: F)
 where
-    F: KpReadable<&'p BigPayload, &'p String>,
+    F: Readable<&'p BigPayload, &'p String>,
 {
     if let Some(emg_contact) = g.get(payload) {
         println!("there value = {:?}", emg_contact);
