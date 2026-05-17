@@ -1,5 +1,5 @@
 use key_paths_derive::Kp;
-use rust_key_paths::{Kp as RustKp, KpDynamic, Readable};
+use rust_key_paths::{KpDynamic, Readable};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -388,7 +388,7 @@ mod tests {
             println!("emergency contact before = {:?}", result);
         }
 
-            test(&root, BigPayload::enterprise()
+            test(&root2, BigPayload2::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities())
             .then(Facilities::warehouses_at(0))
@@ -411,9 +411,9 @@ fn to_string(i: i32) -> String {
     format!("{}", i)
 }
 
-fn test<'p, F>(payload: &'p BigPayload, g: F)
+fn test<'p, F>(payload: &'p BigPayload2, g: F)
 where
-    F: Readable<&'p BigPayload, &'p String>,
+    F: Readable<&'p BigPayload2, &'p String>,
 {
     if let Some(emg_contact) = g.get(payload) {
         println!("there value = {:?}", emg_contact);
