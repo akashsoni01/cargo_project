@@ -1,5 +1,5 @@
 use key_paths_derive::Kp;
-use rust_key_paths::{Kp as RustKp, KpDynamic};
+use rust_key_paths::{Kp as RustKp, KpDynamic, KpReadable};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -12,7 +12,7 @@ pub struct BigPayload {
 
 #[derive(Kp, Debug, Default, Serialize, Deserialize)]
 pub struct BigPayload2 {
-        pub enterprise: arc_swap::ArcSwap<Enterprise>,
+    pub enterprise: arc_swap::ArcSwap<Enterprise>,
 }
 
 impl Clone for BigPayload2 {
@@ -20,9 +20,11 @@ impl Clone for BigPayload2 {
         // *self = source.clone()
         todo!()
     }
-    
+
     fn clone(&self) -> Self {
-        Self { enterprise: arc_swap::ArcSwap::new(self.enterprise.load_full()) } // shallow cloning
+        Self {
+            enterprise: arc_swap::ArcSwap::new(self.enterprise.load_full()),
+        } // shallow cloning
     }
 }
 #[derive(Kp, Debug, Clone, Default, Serialize, Deserialize)]
@@ -288,7 +290,7 @@ mod tests {
         //     .get(& root).map( |emergency_phone| {
         //         assert_eq!(emergency_phone, &"555-0000".to_string());
         //     });
-            
+
         // root
         //     .enterprise.as_ref()
         //     .and_then(|e| e.headquarters.as_ref())
@@ -303,12 +305,10 @@ mod tests {
         //         assert_eq!(emergency_phone, &"555-0000".to_string());
         //     });
 
+        // BigPayload -> enterprise -> headquarters
 
-
-            // BigPayload -> enterprise -> headquarters
-
-            // op of a fn became in of anothe fn. we can combine or compose thse two to make a chain or pipeline
-            BigPayload::enterprise()
+        // op of a fn became in of anothe fn. we can combine or compose thse two to make a chain or pipeline
+        BigPayload::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities())
             .then(Facilities::warehouses_at(0))
@@ -316,68 +316,86 @@ mod tests {
             .then(Manager::contacts())
             .then(Contacts::emergency_contact())
             .then(EmergencyContact::phone())
-            .get(&root).map(|name| {
+            .get(&root)
+            .map(|name| {
                 println!("name = {}", name);
             });
 
+        // kp.get(& instance1);
+        // kp.get(& instance2);
+        // kp.get(& instance3);
+        // kp.get(& instance4);
+        // kp.get(& instance5);
+        // kp.get(& instance5);
+        // let x = to_string(multi_two(add_one(1)));
 
-            // kp.get(& instance1);
-            // kp.get(& instance2);
-            // kp.get(& instance3);
-            // kp.get(& instance4);
-            // kp.get(& instance5);
-            // kp.get(& instance5);
-            // let x = to_string(multi_two(add_one(1)));
+        // add_one.then(multi_two).then(to_string).get
 
-            // add_one.then(multi_two).then(to_string).get
+        // add_one(3);
+        // add_one(5);
+        // add_one(6);
 
-            // add_one(3);
-            // add_one(5);
-            // add_one(6);
-
-
-             let kp = BigPayload::enterprise()
+        let kp = BigPayload::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities())
             .then(Facilities::warehouses_at(0))
             .then(Warehouse::manager())
             .then(Manager::name());
-            println!("size of kp = {:?}", size_of_val(&kp));
+        println!("size of kp = {:?}", size_of_val(&kp));
 
-            (kp).get(&root).map(|name:&String | {
-                println!("name = {}", name);
-            }) ;
+        (kp).get(&root).map(|name: &String| {
+            println!("name = {}", name);
+        });
 
-            println!("size of kp = {:?}", size_of_val(&kp));
+        println!("size of kp = {:?}", size_of_val(&kp));
 
         let kp = BigPayload::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities());
 
-    println!("size of kp2 = {:?}", size_of_val(&kp));
+        println!("size of kp2 = {:?}", size_of_val(&kp));
 
+        let service = SomeService::new();
+        println!(
+            "size of dynamic kp ======= {:?}",
+            size_of_val(&service.hot_path_to_emergency_contact)
+        );
 
-    let service = SomeService::new();
-    println!("size of dynamic kp ======= {:?}", size_of_val(&service.hot_path_to_emergency_contact));
+        let result = service.hot_path_to_emergency_contact.get(&root);
+        println!("result from service = {:?}", result);
 
-    let result = service.hot_path_to_emergency_contact.get(& root);
-    println!("result from service = {:?}", result);
+        let x = BigPayload2::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone());
+        println!(
+            "size of synckp = {:?} to emergency keypath",
+            size_of_val(&x)
+        );
+        if let Some(result) = x.get(&root2) {
+            println!("emergency contact before = {:?}", result);
+        }
 
+        if let Some(result2) = x.get_mut(&mut root2) {
+            *result2 = "911221001000".to_string();
+        }
 
-    let x = BigPayload2::enterprise().then(Enterprise::headquarters()).then(Headquarters::facilities()).then(Facilities::warehouses_at(0)).then(Warehouse::manager()).then(Manager::contacts()).then(Contacts::emergency_contact()).then(EmergencyContact::phone());
-    println!("size of synckp = {:?} to emergency keypath", size_of_val(&x));
-    if let Some(result) = x.get(& root2) {
-        println!("emergency contact before = {:?}", result);
-    }
+        if let Some(result) = x.get(&root2) {
+            println!("emergency contact before = {:?}", result);
+        }
 
-    if let Some(result2) = x.get_mut(&mut root2) {
-        *result2 = "911221001000".to_string();
-    }
-
-    if let Some(result) = x.get(& root2) {
-        println!("emergency contact before = {:?}", result);
-    }
-
+            test(&root, BigPayload::enterprise()
+            .then(Enterprise::headquarters())
+            .then(Headquarters::facilities())
+            .then(Facilities::warehouses_at(0))
+            .then(Warehouse::manager())
+            .then(Manager::contacts())
+            .then(Contacts::emergency_contact())
+            .then(EmergencyContact::phone()));
     }
 }
 
@@ -393,6 +411,16 @@ fn to_string(i: i32) -> String {
     format!("{}", i)
 }
 
+fn test<'p, F>(payload: &'p BigPayload, g: F)
+where
+    F: KpReadable<&'p BigPayload, &'p String>,
+{
+    if let Some(emg_contact) = g.get(payload) {
+        println!("there value = {:?}", emg_contact);
+    } else {
+        println!("not there");
+    }
+}
 fn main() {
     let test = Test { test: 10 };
     let keypath = Test::test();
@@ -410,20 +438,19 @@ fn main() {
 
     println!("result = {:?}", result);
 
-    let result = keypath.get(&test);
+    // let result = keypath.get(&test);
     println!("result = {:?}", result);
     // let result = keypath.get(&test);
     // println!("result = {:?}", result);
-
 }
 
-#[derive(Kp,)]
+#[derive(Kp)]
 struct Test {
     test: usize,
 }
 
 pub struct SomeService {
-    hot_path_to_emergency_contact: KpDynamic<BigPayload, String>
+    hot_path_to_emergency_contact: KpDynamic<BigPayload, String>,
 }
 
 pub enum Messages<'a, G, S>
@@ -431,33 +458,22 @@ where
     G: Fn(&'a Test) -> Option<&'a usize>,
     S: Fn(&'a mut Test) -> Option<&'a mut usize>,
 {
-    KeypathParameter(
-        RustKp<
-            Test,
-            usize,
-            &'a Test,
-            &'a usize,
-            &'a mut Test,
-            &'a mut usize,
-            G,
-            S,
-        >,
-    ),
+    KeypathParameter(RustKp<Test, usize, &'a Test, &'a usize, &'a mut Test, &'a mut usize, G, S>),
 }
-
-
-
 
 impl SomeService {
     fn new() -> Self {
-        Self { hot_path_to_emergency_contact:  BigPayload::enterprise()
-            .then(Enterprise::headquarters())
-            .then(Headquarters::facilities())
-            .then(Facilities::warehouses_at(0))
-            .then(Warehouse::manager())
-            .then(Manager::contacts())
-            .then(Contacts::emergency_contact())
-            .then(EmergencyContact::phone()).into_dynamic() }
+        Self {
+            hot_path_to_emergency_contact: BigPayload::enterprise()
+                .then(Enterprise::headquarters())
+                .then(Headquarters::facilities())
+                .then(Facilities::warehouses_at(0))
+                .then(Warehouse::manager())
+                .then(Manager::contacts())
+                .then(Contacts::emergency_contact())
+                .then(EmergencyContact::phone())
+                .into_dynamic(),
+        }
     }
 
     // fn use_hotpaths(&self) {
