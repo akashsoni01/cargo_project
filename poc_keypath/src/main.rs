@@ -388,7 +388,7 @@ mod tests {
             println!("emergency contact before = {:?}", result);
         }
 
-            test(&root2, BigPayload2::enterprise()
+            test(root2, BigPayload2::enterprise()
             .then(Enterprise::headquarters())
             .then(Headquarters::facilities())
             .then(Facilities::warehouses_at(0))
@@ -411,16 +411,17 @@ fn to_string(i: i32) -> String {
     format!("{}", i)
 }
 
-fn test<'p, F>(payload: &'p BigPayload2, g: F)
+fn test<F>(payload: BigPayload2, g: F)
 where
-    F: Readable<&'p BigPayload2, &'p String>,
+    F: for<'p> Readable<&'p BigPayload2, &'p String>,
 {
-    if let Some(emg_contact) = g.get(payload) {
+    if let Some(emg_contact) = g.get(&payload) {
         println!("there value = {:?}", emg_contact);
     } else {
         println!("not there");
     }
 }
+
 fn main() {
     let test = Test { test: 10 };
     let keypath = Test::test();
@@ -459,6 +460,15 @@ pub enum Messages<F> {
 
 impl SomeService {
     fn new() -> Self {
+        let kp_to_emr_contact = BigPayload::enterprise() 
+        >> Enterprise::headquarters() 
+        >> Headquarters::facilities() 
+        >> Facilities::warehouses_at(0) 
+        >> Warehouse::manager()
+        >> Manager::contacts()
+        >> Contacts::emergency_contact()
+        >> EmergencyContact::phone()
+        ;
         Self {
             hot_path_to_emergency_contact: BigPayload::enterprise()
                 .then(Enterprise::headquarters())
